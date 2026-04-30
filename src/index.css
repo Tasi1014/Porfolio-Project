@@ -1,1 +1,156 @@
+/* ============================================================
+   INDEX.CSS — Global Design Tokens & Base Styles
+   Portfolio: "Kinetic Noir" Design System
+   ============================================================ */
+
 @import "tailwindcss";
+
+/* --- Theme Custom Properties (easy to swap later) --- */
+:root {
+  --bg-primary: #0f0f0f;
+  --bg-card: #1a1a1a;
+  --bg-elevated: #242424;
+  --accent: #f5a623;
+  --accent-dim: rgba(245, 166, 35, 0.1);
+  --accent-glow: rgba(245, 166, 35, 0.25);
+  --text-primary: #ffffff;
+  --text-secondary: #888888;
+  --border: #2a2a2a;
+  --success: #22c55e;
+  --error: #ef4444;
+  --tiktok: #010101;
+  --instagram: #e1306c;
+  --whatsapp: #25d366;
+
+  /* Typography */
+  --font-heading: "Syne", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+/*
+  IMPORTANT: Tailwind v4 uses @layer for all utilities.
+  Any unlayered CSS (like a * { padding: 0 } reset) will OVERRIDE
+  Tailwind's padding/margin utilities. Tailwind v4 includes its own
+  preflight reset, so we DON'T need a manual one.
+  All custom base styles MUST go inside @layer base.
+*/
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* --- Scrollbar Styling --- */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--bg-elevated);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+  }
+
+  /* --- Selection Color --- */
+  ::selection {
+    background: var(--accent);
+    color: var(--bg-primary);
+  }
+}
+
+/* --- Utility classes inside @layer utilities so they compose properly --- */
+@layer utilities {
+  .section-padding {
+    padding-top: 56px;
+    padding-bottom: 56px;
+  }
+
+  @media (min-width: 768px) {
+    .section-padding {
+      padding-top: 72px;
+      padding-bottom: 72px;
+    }
+  }
+
+  .container-max {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  @media (min-width: 640px) {
+    .container-max {
+      padding-left: 32px;
+      padding-right: 32px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container-max {
+      padding-left: 40px;
+      padding-right: 40px;
+    }
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+}
+
+/* --- Keyframe Animations (these are fine unlayered) --- */
+@keyframes whatsapp-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(37, 211, 102, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+  }
+}
+
+/* --- Tailwind v4 Theme Extension --- */
+@theme {
+  --color-bg-primary: #0f0f0f;
+  --color-bg-card: #1a1a1a;
+  --color-bg-elevated: #242424;
+  --color-accent: #f5a623;
+  --color-accent-dim: rgba(245, 166, 35, 0.1);
+  --color-accent-glow: rgba(245, 166, 35, 0.25);
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #888888;
+  --color-border: #2a2a2a;
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+  --color-tiktok: #010101;
+  --color-instagram: #e1306c;
+  --color-whatsapp: #25d366;
+
+  --font-family-heading: "Syne", sans-serif;
+  --font-family-body: "Inter", sans-serif;
+  --font-family-mono: "JetBrains Mono", monospace;
+}
