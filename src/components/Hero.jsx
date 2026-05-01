@@ -41,7 +41,7 @@ const statPop = {
 
 const stats = [
   { value: "50+", label: "PROJECTS DONE", pos: "-top-4 -right-4 lg:-right-8" },
-  { value: "3+", label: "YEARS EXP", pos: "bottom-28 -left-8 lg:-left-14" },
+  { value: "1+", label: "YEARS EXP", pos: "bottom-28 -left-8 lg:-left-14" },
   { value: "100%", label: "HAPPY CLIENTS", pos: "-bottom-4 right-4 lg:right-2" },
 ];
 
@@ -132,7 +132,7 @@ export default function Hero() {
             {/* Portrait — rectangular with rounded corners */}
             <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden border border-border/50 bg-bg-card">
               <img
-                src="https://placehold.co/400x530/1a1a1a/f5a623?text=Portrait"
+                src="/hero-image.png"
                 alt="Madhav portrait"
                 loading="lazy"
                 className="w-full h-full object-cover"

@@ -69,7 +69,7 @@ export default function About() {
               <span className="absolute bottom-0 right-0 w-7 h-7 border-b-2 border-r-2 border-accent rounded-br" />
               {/* Image */}
               <img
-                src="https://placehold.co/320x400/1a1a1a/f5a623?text=About+Photo"
+                src="/about-image.png"
                 alt="About Madhav"
                 loading="lazy"
                 className="w-full h-full object-cover rounded-lg p-2.5"
