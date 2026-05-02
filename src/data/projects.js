@@ -129,7 +129,7 @@ const projects = [
     category: "Graphic Design",
     platform: null,
     title: "Gaming Video",
-    brand: "Manisha Gaming",
+    brand: "Mahishah Gaming Yt",
     description:
       "A vibrant PUBG Mobile livestream thumbnail showcasing the NEW UPDATE 3.6 with fantasy-themed character wings.",
     thumbnail: "thumbnail4.jpg",
@@ -144,7 +144,7 @@ const projects = [
     category: "Graphic Design",
     platform: null,
     title: "PUBG Live",
-    brand: "Manisha Gaming",
+    brand: "Mahishah Gaming Yt",
     description:
       "A striking PUBG livestream thumbnail featuring a VENOM UPDATE with a dramatic split-face effect. It blends gaming culture with cinematic themes to highlight new character content.",
     thumbnail: "thumbnail5.jpg",

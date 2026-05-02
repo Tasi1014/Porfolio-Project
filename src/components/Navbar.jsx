@@ -102,7 +102,7 @@ export default function Navbar() {
         {/* Mobile Hamburger */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden text-2xl text-text-primary p-2 cursor-pointer"
+          className="md:hidden text-2xl text-text-primary p-2 cursor-pointer relative z-[60]"
           aria-label="Toggle menu"
         >
           {mobileOpen ? <HiX /> : <HiMenuAlt3 />}
