@@ -1,14 +1,32 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 export default function IntroScreen({ onComplete }) {
+  const [fontsReady, setFontsReady] = useState(false);
+
   useEffect(() => {
+    // Wait for fonts to be ready to avoid stutter/flash
+    document.fonts.ready.then(() => {
+      setFontsReady(true);
+    });
+
     // Prevent scrolling while intro is playing
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
     };
   }, []);
+
+  if (!fontsReady) {
+    return (
+      <div style={{ 
+        position: 'fixed', 
+        inset: 0, 
+        background: '#0f0f0f', 
+        zIndex: 99999 
+      }} />
+    );
+  }
 
   return (
     <motion.div

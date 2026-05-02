@@ -123,10 +123,31 @@ export default function Navbar() {
             />
             {/* Drawer */}
             <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "tween", duration: 0.3 }}
+              initial="closed"
+              animate="open"
+              exit="closed"
+              variants={{
+                closed: { 
+                  x: "100%",
+                  opacity: 0,
+                  transition: { 
+                    duration: 0.3,
+                    ease: [0.4, 0, 0.2, 1]
+                  }
+                },
+                open: { 
+                  x: "0%",
+                  opacity: 1,
+                  transition: { 
+                    duration: 0.3,
+                    ease: [0.4, 0, 0.2, 1]
+                  }
+                }
+              }}
+              style={{ 
+                willChange: mobileOpen ? 'transform' : 'auto',
+                transform: 'translateZ(0)'
+              }}
               className="fixed top-0 right-0 w-3/4 max-w-xs h-screen bg-bg-card border-l border-border z-40 flex flex-col pt-20 px-8 gap-6 md:hidden"
             >
               {navLinks.map((link) => (
