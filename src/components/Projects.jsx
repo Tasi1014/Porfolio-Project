@@ -10,6 +10,7 @@ import projects from "../data/projects";
 import ProjectCard from "./ProjectCard";
 import VideoModal from "./VideoModal";
 import ImageLightbox from "./ImageLightbox";
+import TextReveal from "./animations/TextReveal";
 
 const tabs = ["All", "Graphic Design", "Video Editing", "Content Writing"];
 
@@ -53,14 +54,11 @@ export default function Projects() {
           02 / Projects
         </motion.p>
 
-        <motion.h2
+        <TextReveal
+          text="Selected Works"
+          tag="h2"
           className="font-[family-name:var(--font-heading)] text-2xl sm:text-3xl lg:text-4xl font-bold mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          Selected Works
-        </motion.h2>
+        />
 
         {/* Filter Tabs */}
         <div className="flex flex-wrap gap-2 mb-8">

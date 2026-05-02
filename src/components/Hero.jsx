@@ -9,6 +9,9 @@
 
 import { motion } from "framer-motion";
 import { HiDownload, HiArrowRight } from "react-icons/hi";
+import CountUp from "./animations/CountUp";
+import SplitText from "./animations/SplitText";
+import SpotlightEffect from "./animations/SpotlightEffect";
 
 const containerLeft = {
   hidden: { opacity: 0, x: -60 },
@@ -39,13 +42,17 @@ const statPop = {
   }),
 };
 
+import useParallax from "../hooks/useParallax";
+
 const stats = [
-  { value: "50+", label: "PROJECTS DONE", pos: "-top-4 -right-4 lg:-right-8" },
-  { value: "1+", label: "YEARS EXP", pos: "bottom-28 -left-8 lg:-left-14" },
-  { value: "100%", label: "HAPPY CLIENTS", pos: "-bottom-4 right-4 lg:right-2" },
+  { value: 50, suffix: "+", label: "PROJECTS DONE", pos: "-top-4 -right-4 lg:-right-8" },
+  { value: 1, suffix: "+", label: "YEARS EXP", pos: "bottom-28 -left-8 lg:-left-14" },
+  { value: 100, suffix: "%", label: "HAPPY CLIENTS", pos: "-bottom-4 -right-6 lg:-right-12" },
 ];
 
 export default function Hero() {
+  const { ref: parallaxRef, style: parallaxStyle } = useParallax({ speed: 0.12 });
+
   const scrollTo = (id) => {
     document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
   };
@@ -53,60 +60,64 @@ export default function Hero() {
   return (
     <section
       id="home"
-      className="min-h-[100dvh] flex items-end lg:items-center pb-12 pt-20 lg:pt-16 lg:pb-8"
+      className="relative min-h-[100dvh] flex items-end lg:items-center pb-12 pt-20 lg:pt-16 lg:pb-8"
     >
+      <SpotlightEffect />
       <div className="container-max w-full flex flex-col-reverse lg:flex-row items-center lg:items-end gap-10 lg:gap-12">
         {/* ---- LEFT COLUMN ---- */}
         <motion.div
-          className="w-full lg:w-[52%] pb-4"
+          className="w-full lg:w-[52%] flex flex-col items-center text-center lg:items-start lg:text-left z-10"
           variants={containerLeft}
           initial="hidden"
           animate="visible"
         >
-          {/* Availability Badge */}
-          <motion.div variants={childFade} className="mb-6">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border text-xs font-medium text-text-secondary font-[family-name:var(--font-mono)]">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-75 animate-ping" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success" />
-              </span>
+          {/* Top accent badge */}
+          <motion.div
+            variants={childFade}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-bg-elevated border border-border mb-6"
+          >
+            <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+            <span className="text-[10px] uppercase tracking-widest text-text-secondary font-[family-name:var(--font-mono)]">
               Available for Freelance
             </span>
           </motion.div>
 
-          {/* Heading — large, Syne, two lines */}
+          {/* Main Headline */}
           <motion.h1
             variants={childFade}
-            className="font-[family-name:var(--font-heading)] text-[2.75rem] sm:text-[3.5rem] lg:text-[4rem] xl:text-[4.5rem] font-extrabold leading-[1.05] tracking-tight mb-6"
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem] font-bold leading-[1.05] tracking-tight mb-6 font-[family-name:var(--font-heading)]"
           >
-            I Design.{" "}
-            <span className="text-accent">I</span>
-            <br />
-            <span className="text-accent">Edit.</span>{" "}
-            I Write.
+            <SplitText text="I Design." color="white" delay={0} /><br />
+            <SplitText text="I Edit." color="accent" delay={0.3} /><br />
+            <SplitText text="I Write." color="white" delay={0.6} />
           </motion.h1>
 
-          {/* Subheading */}
+          {/* Bio paragraph */}
           <motion.p
             variants={childFade}
-            className="text-text-secondary text-sm sm:text-base lg:text-lg max-w-md mb-8 leading-relaxed"
+            className="text-text-secondary md:text-lg max-w-md lg:max-w-xl mb-8 leading-relaxed font-light"
           >
-          I design things people actually stop to look at.<br />
-          Edit videos that keep you watching till the end.<br />
-          Write words that say exactly what needs to be said.<br />
-          That's pretty much it.
+            I am a multidisciplinary creative based in Kathmandu. I craft compelling visual stories,
+            engaging video content, and copy that connects.
           </motion.p>
 
-          {/* CTA Buttons — large, prominent */}
-          <motion.div variants={childFade} className="flex flex-wrap gap-4">
-            <motion.button
+          {/* CTAs */}
+          <motion.div
+            variants={childFade}
+            className="flex flex-wrap items-center justify-center lg:justify-start gap-4"
+          >
+            <motion.a
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => scrollTo("#projects")}
-              className="flex items-center gap-2 px-8 py-4 bg-accent text-bg-primary font-bold rounded-full text-sm cursor-pointer hover:brightness-110 transition-all"
+              href="#projects"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollTo("#projects");
+              }}
+              className="flex items-center gap-2 px-8 py-4 bg-accent text-bg-primary rounded-full text-sm font-semibold hover:brightness-110 transition-colors"
             >
-              View My Work <HiArrowRight />
-            </motion.button>
+              See My Work <HiArrowRight />
+            </motion.a>
             <motion.a
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -131,12 +142,13 @@ export default function Hero() {
             <div className="absolute -inset-4 bg-gradient-to-br from-accent/20 via-accent/5 to-transparent rounded-2xl blur-2xl" />
 
             {/* Portrait — rectangular with rounded corners */}
-            <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden border border-border/50 bg-bg-card">
-              <img
+            <div ref={parallaxRef} className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden border border-border/50 bg-bg-card">
+              <motion.img
                 src="/hero-image.png"
                 alt="Madhav portrait"
                 loading="lazy"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover origin-top"
+                style={{ ...parallaxStyle, scale: 1.2 }}
               />
               {/* Bottom gradient overlay for stat card legibility */}
               <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/60 via-transparent to-transparent" />
@@ -153,7 +165,7 @@ export default function Hero() {
                 className={`absolute ${stat.pos} bg-bg-card/95 backdrop-blur-md border border-border rounded-xl px-4 py-3 text-center shadow-lg z-10`}
               >
                 <p className="text-accent text-lg font-bold font-[family-name:var(--font-heading)]">
-                  {stat.value}
+                  <CountUp end={stat.value} suffix={stat.suffix} />
                 </p>
                 <p className="text-[10px] text-text-secondary tracking-wider font-[family-name:var(--font-mono)] uppercase">
                   {stat.label}

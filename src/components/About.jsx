@@ -7,6 +7,7 @@
 import { motion } from "framer-motion";
 import { HiDownload } from "react-icons/hi";
 import { FaPaintBrush, FaVideo, FaPen } from "react-icons/fa";
+import TextReveal from "./animations/TextReveal";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -18,13 +19,13 @@ const skillCards = [
     icon: <FaPaintBrush />,
     title: "Graphic Design",
     accent: "#f5a623",
-    tools: "Photoshop, Illustrator, Figma, InDesign",
+    tools: "Photoshop, Illustrator",
   },
   {
     icon: <FaVideo />,
     title: "Video Editing",
     accent: "#3b82f6",
-    tools: "Premiere Pro, After Effects, DaVinci Resolve",
+    tools: "Premiere Pro, After Effects",
   },
   {
     icon: <FaPen />,
@@ -34,7 +35,11 @@ const skillCards = [
   },
 ];
 
+import useParallax from "../hooks/useParallax";
+
 export default function About() {
+  const { ref: parallaxRef, style: parallaxStyle } = useParallax({ speed: 0.1 });
+
   return (
     <section id="about" className="section-padding border-t border-border">
       <div className="container-max">
@@ -67,13 +72,18 @@ export default function About() {
               <span className="absolute bottom-0 left-0 w-7 h-7 border-b-2 border-l-2 border-accent rounded-bl" />
               {/* Bottom-right corner */}
               <span className="absolute bottom-0 right-0 w-7 h-7 border-b-2 border-r-2 border-accent rounded-br" />
-              {/* Image */}
-              <img
-                src="/about-image.png"
-                alt="About Madhav"
-                loading="lazy"
-                className="w-full h-full object-cover rounded-lg p-2.5"
-              />
+              {/* Image Container for Parallax */}
+              <div ref={parallaxRef} className="w-full h-full p-2.5">
+                <div className="w-full h-full overflow-hidden rounded-lg">
+                  <motion.img
+                    src="/about-image.png"
+                    alt="About Madhav"
+                    loading="lazy"
+                    className="w-full h-full object-cover origin-top"
+                    style={{ ...parallaxStyle, scale: 1.2 }}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Download CV ghost button */}
@@ -96,11 +106,11 @@ export default function About() {
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
           >
-            <h2 className="font-[family-name:var(--font-heading)] text-2xl sm:text-3xl lg:text-4xl font-bold mb-5 leading-tight">
-              Turning ideas into
-              <br />
-              visual experiences
-            </h2>
+            <TextReveal
+              text="Turning ideas into visual experiences"
+              tag="h2"
+              className="font-[family-name:var(--font-heading)] text-2xl sm:text-3xl lg:text-4xl font-bold mb-5 leading-tight"
+            />
 
             <p className="text-text-secondary text-sm sm:text-base mb-3 leading-relaxed">
               I'm a multi-disciplinary creative based in Kathmandu, Nepal. With

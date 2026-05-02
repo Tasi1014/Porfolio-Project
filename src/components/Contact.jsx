@@ -40,6 +40,7 @@ import {
   FaLinkedinIn,
 } from "react-icons/fa";
 import { ImSpinner8 } from "react-icons/im";
+import TextReveal from "./animations/TextReveal";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -48,8 +49,8 @@ const fadeUp = {
 
 const socials = [
   { icon: <FaInstagram />, url: "https://www.instagram.com/destenmadhav/", label: "Instagram" },
-  { icon: <FaTiktok />, url: "https://tiktok.com/@", label: "TikTok" },
-  { icon: <FaLinkedinIn />, url: "https://linkedin.com/in/", label: "LinkedIn" },
+  { icon: <FaTiktok />, url: "https://www.tiktok.com/@madhav_visuals?_r=1&_t=ZS-9616wDT8ajl", label: "TikTok" },
+  { icon: <FaLinkedinIn />, url: "https://www.linkedin.com/in/madhav-upadhyaya-243ba3327?utm_source=share_via&utm_content=profile&utm_medium=member_android", label: "LinkedIn" },
 ];
 
 export default function Contact() {
@@ -122,14 +123,11 @@ export default function Contact() {
           03 / Contact
         </motion.p>
 
-        <motion.h2
+        <TextReveal
+          text="Let's Work Together"
+          tag="h2"
           className="font-[family-name:var(--font-heading)] text-2xl sm:text-3xl lg:text-4xl font-bold mb-2"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          Let&apos;s Work Together
-        </motion.h2>
+        />
         <motion.p
           className="text-text-secondary text-sm sm:text-base mb-10 max-w-md"
           initial={{ opacity: 0 }}

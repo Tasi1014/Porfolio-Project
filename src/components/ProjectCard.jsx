@@ -4,8 +4,10 @@
  * category pill, project info
  */
 
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { FaTiktok, FaInstagram, FaPlay, FaExpand } from "react-icons/fa";
+import VanillaTilt from "vanilla-tilt";
 
 // Category color map
 const categoryColors = {
@@ -17,16 +19,36 @@ const categoryColors = {
 export default function ProjectCard({ project, onClick, index }) {
   const isVideo = project.type === "video";
   const catColor = categoryColors[project.category] || "#f5a623";
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    if (window.matchMedia("(hover: none)").matches) return;
+
+    if (cardRef.current) {
+      VanillaTilt.init(cardRef.current, {
+        max: 8,
+        speed: 400,
+        glare: true,
+        "max-glare": 0.08,
+        scale: 1.03,
+        perspective: 1000,
+        transition: true,
+        reset: true,
+      });
+    }
+    return () => cardRef.current?.vanillaTilt?.destroy();
+  }, []);
 
   return (
     <motion.div
+      ref={cardRef}
       layout
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.35, delay: index * 0.05 }}
       onClick={() => onClick(project)}
-      className="group cursor-pointer bg-bg-card border border-border rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_4px_20px_rgba(245,166,35,0.12)]"
+      className="group cursor-pointer bg-bg-card border border-border rounded-xl overflow-hidden transition-all duration-300"
     >
       {/* Thumbnail Container */}
       <div className="relative aspect-video overflow-hidden">

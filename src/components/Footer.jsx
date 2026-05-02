@@ -23,9 +23,9 @@ export default function Footer() {
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  const scrollToTop = () =>
+  const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleClick = (e, href) => {
     e.preventDefault();
