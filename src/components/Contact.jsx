@@ -38,7 +38,6 @@ import {
   FaInstagram,
   FaTiktok,
   FaLinkedinIn,
-  FaBehance,
 } from "react-icons/fa";
 import { ImSpinner8 } from "react-icons/im";
 
@@ -48,10 +47,9 @@ const fadeUp = {
 };
 
 const socials = [
-  { icon: <FaInstagram />, url: "https://instagram.com/", label: "Instagram" },
+  { icon: <FaInstagram />, url: "https://www.instagram.com/destenmadhav/", label: "Instagram" },
   { icon: <FaTiktok />, url: "https://tiktok.com/@", label: "TikTok" },
   { icon: <FaLinkedinIn />, url: "https://linkedin.com/in/", label: "LinkedIn" },
-  { icon: <FaBehance />, url: "https://behance.net/", label: "Behance" },
 ];
 
 export default function Contact() {

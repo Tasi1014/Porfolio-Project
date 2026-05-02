@@ -1,13 +1,6 @@
-/**
- * WhatsAppButton.jsx — Floating WhatsApp bubble
- * Features: pulsing green ring, hover tooltip, opens WhatsApp chat
- * Replace the phone number below with your real number
- */
-
 import { motion } from "framer-motion";
 import { FaWhatsapp } from "react-icons/fa";
 
-// --- Replace this with your real WhatsApp number (with country code, no + sign) ---
 const PHONE_NUMBER = "9779742841740";
 const MESSAGE = encodeURIComponent(
   "Hi Madhav! I saw your portfolio and I'd love to discuss a project."

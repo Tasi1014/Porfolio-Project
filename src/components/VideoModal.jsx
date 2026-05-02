@@ -1,9 +1,3 @@
-/**
- * VideoModal.jsx — Modal for video projects
- * Handles both TikTok (iframe embed) and Instagram (thumbnail + link)
- * Features: backdrop click to close, close button, project details
- */
-
 import { motion } from "framer-motion";
 import { HiX } from "react-icons/hi";
 import { FaInstagram, FaExternalLinkAlt } from "react-icons/fa";
@@ -42,7 +36,6 @@ export default function VideoModal({ project, onClose }) {
         onClick={(e) => e.stopPropagation()}
         className="relative z-10 bg-bg-card border border-border rounded-2xl overflow-hidden max-w-lg w-full max-h-[90vh] overflow-y-auto"
       >
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-bg-elevated/80 text-text-primary hover:text-accent transition cursor-pointer"
@@ -65,14 +58,12 @@ export default function VideoModal({ project, onClose }) {
             </div>
           </div>
         ) : (
-          /* ---- Instagram: thumbnail + link ---- */
           <div className="relative">
             <img
               src={project.thumbnail}
               alt={project.title}
               className="w-full aspect-video object-cover"
             />
-            {/* Instagram badge overlay */}
             <div className="absolute inset-0 flex items-center justify-center bg-black/30">
               <span className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center">
                 <FaInstagram className="text-white text-2xl" />

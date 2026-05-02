@@ -62,7 +62,7 @@ export default function Footer() {
 
             {/* Right */}
             <p className="flex items-center gap-1.5 text-text-secondary/50 text-xs">
-              © 2025 · Made with{" "}
+              © 2026 · Made with{" "}
               <FaHeart className="text-red-500 text-[10px]" /> in React
             </p>
           </div>
@@ -88,7 +88,7 @@ export default function Footer() {
               ))}
             </div>
             <p className="flex items-center gap-1.5 text-text-secondary/50 text-xs">
-              © 2025 · Made with{" "}
+              © 2026We  · Made with{" "}
               <FaHeart className="text-red-500 text-[10px]" /> in React
             </p>
           </div>

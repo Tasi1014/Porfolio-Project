@@ -91,9 +91,10 @@ export default function Hero() {
             variants={childFade}
             className="text-text-secondary text-sm sm:text-base lg:text-lg max-w-md mb-8 leading-relaxed"
           >
-            Crafting digital narratives through architectural design, kinetic
-            motion editing, and razor-sharp content strategy for the next
-            generation of creative brands.
+          I design things people actually stop to look at.<br />
+          Edit videos that keep you watching till the end.<br />
+          Write words that say exactly what needs to be said.<br />
+          That's pretty much it.
           </motion.p>
 
           {/* CTA Buttons — large, prominent */}

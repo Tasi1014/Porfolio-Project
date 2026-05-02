@@ -104,7 +104,7 @@ export default function About() {
 
             <p className="text-text-secondary text-sm sm:text-base mb-3 leading-relaxed">
               I'm a multi-disciplinary creative based in Kathmandu, Nepal. With
-              over three years of experience, I specialize in graphic design,
+              over a year of experience, I specialize in graphic design,
               video editing, and content writing — helping brands communicate
               their stories through compelling visuals and words.
             </p>

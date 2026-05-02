@@ -1,15 +1,5 @@
-/**
- * projects.js — All portfolio project data
- * ============================================================
- * Replace thumbnails with your own images in /src/assets/images/
- * Replace TikTok/Instagram URLs with your real content URLs
- * ============================================================
- */
 
 const projects = [
-  // ==================== VIDEO PROJECTS ====================
-
-  // --- TikTok Videos (3) ---
   {
     id: 1,
     type: "video",
