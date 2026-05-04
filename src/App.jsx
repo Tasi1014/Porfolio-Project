@@ -16,12 +16,17 @@ import IntroScreen from "./components/IntroScreen";
 
 export default function App() {
   const [showIntro, setShowIntro] = useState(() => {
-    return !sessionStorage.getItem("introPlayed");
+    return !sessionStorage.getItem("intro-shown");
+  });
+
+  const [introComplete, setIntroComplete] = useState(() => {
+    // If intro won't show, animations should work immediately
+    return sessionStorage.getItem("intro-shown") === "true";
   });
 
   const handleIntroComplete = () => {
-    sessionStorage.setItem("introPlayed", "true");
     setShowIntro(false);
+    setIntroComplete(true);
   };
 
   return (
@@ -31,7 +36,8 @@ export default function App() {
       
       <Navbar />
       <main>
-        <Hero />
+        <Hero introComplete={introComplete} />
+
         <About />
         <Projects />
         <Contact />

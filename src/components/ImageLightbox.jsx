@@ -49,7 +49,7 @@ export default function ImageLightbox({
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-4"
+      className="fixed inset-0 z-100 flex flex-col items-center justify-center p-4"
       variants={overlay}
       initial="hidden"
       animate="visible"

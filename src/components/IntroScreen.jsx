@@ -17,6 +17,11 @@ export default function IntroScreen({ onComplete }) {
     };
   }, []);
 
+  const handleExitComplete = () => {
+    sessionStorage.setItem("intro-shown", "true");
+    onComplete();
+  };
+
   if (!fontsReady) {
     return (
       <div style={{ 
@@ -30,28 +35,28 @@ export default function IntroScreen({ onComplete }) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[99999] bg-[#0f0f0f] flex flex-col items-center justify-center pointer-events-none"
+      className="fixed inset-0 z-[99999] bg-[#0f0f0f] flex flex-col items-center justify-center pointer-events-none no-transition"
       initial={{ y: "0%" }}
       animate={{ y: "-100%" }}
       transition={{ delay: 1.4, duration: 0.5, ease: "easeInOut" }}
-      onAnimationComplete={onComplete}
+      onAnimationComplete={handleExitComplete}
     >
       {/* Content wrapper to hold elements centered */}
-      <div className="flex flex-col items-center relative">
+      <div className="flex flex-col items-center relative no-transition">
         {/* Name: 0ms -> 400ms */}
         <motion.h1
-          className="font-[family-name:var(--font-heading)] font-bold text-white tracking-tight"
+          className="font-[family-name:var(--font-heading)] font-bold text-white tracking-tight no-transition"
           style={{ fontSize: "clamp(48px, 8vw, 80px)" }}
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
         >
-          Madhav<span className="text-accent">.</span>
+          Madhav<span className="text-[#f5a623]">.</span>
         </motion.h1>
 
         {/* Orange Line: 400ms -> 900ms */}
         <motion.div
-          className="absolute -bottom-2 md:-bottom-4 left-0 right-0 h-[2px] bg-[#f5a623]"
+          className="absolute -bottom-2 md:-bottom-4 left-0 right-0 h-[2px] bg-[#f5a623] no-transition"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ delay: 0.4, duration: 0.5, ease: "circOut" }}
@@ -61,3 +66,4 @@ export default function IntroScreen({ onComplete }) {
     </motion.div>
   );
 }
+

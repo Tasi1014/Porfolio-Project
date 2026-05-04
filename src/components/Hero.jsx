@@ -7,7 +7,8 @@
  * - Floating stat cards around image
  */
 
-import { motion } from "framer-motion";
+import { useEffect } from "react";
+import { motion, useAnimation } from "framer-motion";
 import { HiDownload, HiArrowRight } from "react-icons/hi";
 import CountUp from "./animations/CountUp";
 import SplitText from "./animations/SplitText";
@@ -50,12 +51,23 @@ const stats = [
   { value: 100, suffix: "%", label: "HAPPY CLIENTS", pos: "-bottom-4 -right-6 lg:-right-12" },
 ];
 
-export default function Hero() {
+export default function Hero({ introComplete }) {
   const { ref: parallaxRef, style: parallaxStyle } = useParallax({ speed: 0.12 });
+  const heroControls = useAnimation();
+
+  useEffect(() => {
+    if (introComplete) {
+      const timer = setTimeout(() => {
+        heroControls.start("visible");
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [introComplete, heroControls]);
 
   const scrollTo = (id) => {
     document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
   };
+
 
   return (
     <section
@@ -69,7 +81,7 @@ export default function Hero() {
           className="w-full lg:w-[52%] flex flex-col items-center text-center lg:items-start lg:text-left z-10"
           variants={containerLeft}
           initial="hidden"
-          animate="visible"
+          animate={heroControls}
         >
           {/* Top accent badge */}
           <motion.div
@@ -135,7 +147,7 @@ export default function Hero() {
           className="w-full lg:w-[48%] flex justify-center lg:justify-end"
           variants={containerRight}
           initial="hidden"
-          animate="visible"
+          animate={heroControls}
         >
           <div className="relative w-64 sm:w-72 lg:w-80 xl:w-[360px]">
             {/* Orange ambient glow behind image */}
@@ -161,7 +173,7 @@ export default function Hero() {
                 custom={i}
                 variants={statPop}
                 initial="hidden"
-                animate="visible"
+                animate={heroControls}
                 className={`absolute ${stat.pos} bg-bg-card/95 backdrop-blur-md border border-border rounded-xl px-4 py-3 text-center shadow-lg z-10`}
               >
                 <p className="text-accent text-lg font-bold font-[family-name:var(--font-heading)]">
