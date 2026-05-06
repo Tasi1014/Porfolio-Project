@@ -7,6 +7,7 @@
  * - Floating stat cards around image
  */
 
+import ReactGA from 'react-ga4';
 import { useEffect } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { HiDownload, HiArrowRight } from "react-icons/hi";
@@ -125,6 +126,11 @@ export default function Hero({ introComplete }) {
               onClick={(e) => {
                 e.preventDefault();
                 scrollTo("#projects");
+                ReactGA.event({
+                  category: 'Navigation',
+                  action: 'Clicked View My Work',
+                  label: 'Hero CTA Primary'
+                });
               }}
               className="flex items-center gap-2 px-8 py-4 bg-accent text-bg-primary rounded-full text-sm font-semibold hover:brightness-110 transition-colors"
             >
@@ -135,6 +141,13 @@ export default function Hero({ introComplete }) {
               whileTap={{ scale: 0.97 }}
               href="/resume.pdf"
               download
+              onClick={() => {
+                ReactGA.event({
+                  category: 'Engagement',
+                  action: 'CV Downloaded',
+                  label: 'Hero CTA Secondary'
+                });
+              }}
               className="flex items-center gap-2 px-8 py-4 border border-text-primary/30 text-text-primary rounded-full text-sm font-semibold hover:bg-text-primary/5 transition-all"
             >
               <HiDownload /> Download CV

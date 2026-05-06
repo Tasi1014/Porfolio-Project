@@ -4,6 +4,7 @@
  * skill category cards with colored left borders
  */
 
+import ReactGA from 'react-ga4';
 import { motion } from "framer-motion";
 import { HiDownload } from "react-icons/hi";
 import { FaPaintBrush, FaVideo, FaPen } from "react-icons/fa";
@@ -92,6 +93,13 @@ export default function About() {
               whileTap={{ scale: 0.97 }}
               href="/resume.pdf"
               download
+              onClick={() => {
+                ReactGA.event({
+                  category: 'Engagement',
+                  action: 'CV Downloaded',
+                  label: 'About Section'
+                });
+              }}
               className="flex items-center gap-2 px-5 py-2.5 border border-border text-text-secondary rounded-full text-sm font-medium hover:border-accent hover:text-accent transition-all"
             >
               <HiDownload /> Download CV

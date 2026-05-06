@@ -4,6 +4,7 @@
  * category pill, project info
  */
 
+import ReactGA from 'react-ga4';
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { FaTiktok, FaInstagram, FaPlay, FaExpand } from "react-icons/fa";
@@ -47,7 +48,14 @@ export default function ProjectCard({ project, onClick, index }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.35, delay: index * 0.05 }}
-      onClick={() => onClick(project)}
+      onClick={() => {
+        onClick(project);
+        ReactGA.event({
+          category: 'Projects',
+          action: 'Project Card Clicked',
+          label: project.title
+        });
+      }}
       className="group cursor-pointer bg-bg-card border border-border rounded-xl overflow-hidden transition-all duration-300"
     >
       {/* Thumbnail Container */}

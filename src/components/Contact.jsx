@@ -26,6 +26,7 @@
  * ============================================================
  */
 
+import ReactGA from 'react-ga4';
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import emailjs from "@emailjs/browser";
@@ -98,6 +99,11 @@ export default function Contact() {
       );
       setToast({ type: "success", msg: "Message sent! I'll get back to you soon. ✓" });
       setForm({ from_name: "", from_email: "", subject: "", message: "" });
+      ReactGA.event({
+        category: 'Contact',
+        action: 'Contact Form Submitted',
+        label: 'EmailJS Form'
+      });
     } catch (err) {
       console.error("EmailJS Error:", err);
       setToast({ type: "error", msg: "Something went wrong. Please try again." });

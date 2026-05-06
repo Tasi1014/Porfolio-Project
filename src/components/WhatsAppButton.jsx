@@ -1,3 +1,4 @@
+import ReactGA from 'react-ga4';
 import { motion } from "framer-motion";
 import { FaWhatsapp } from "react-icons/fa";
 
@@ -8,9 +9,18 @@ const MESSAGE = encodeURIComponent(
 const WA_URL = `https://wa.me/${PHONE_NUMBER}?text=${MESSAGE}`;
 
 export default function WhatsAppButton() {
+  const handleClick = () => {
+    ReactGA.event({
+      category: 'Contact',
+      action: 'WhatsApp Button Clicked',
+      label: 'Floating WhatsApp Bubble'
+    });
+  };
+
   return (
     <motion.a
       href={WA_URL}
+      onClick={handleClick}
       target="_blank"
       rel="noopener noreferrer"
       initial={{ opacity: 0, scale: 0 }}
