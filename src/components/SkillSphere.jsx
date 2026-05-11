@@ -98,12 +98,10 @@ export default function SkillSphere() {
 
   const animate = () => {
     if (!isDraggingRef.current && animationCompleteRef.current) {
-      // SLOWER AUTO-ROTATION
       velocityRef.current.y += 0.005;
       velocityRef.current.x += 0.0003;
     }
 
-    // SLIGHTLY MORE DAMPING for "silky" feel (0.97 instead of 0.98)
     velocityRef.current.x *= 0.97;
     velocityRef.current.y *= 0.97;
 
@@ -191,7 +189,6 @@ export default function SkillSphere() {
     const deltaX = clientX - lastMousePosRef.current.x;
     const deltaY = clientY - lastMousePosRef.current.y;
     
-    // EVEN LOWER SENSITIVITY for "smoother" feel (0.05)
     velocityRef.current.y += deltaX * 0.05;
     velocityRef.current.x -= deltaY * 0.05;
     
@@ -214,7 +211,7 @@ export default function SkillSphere() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        userSelect: 'none', // DISABLE SELECTION
+        userSelect: 'none',
         WebkitUserSelect: 'none',
       }}
       onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
@@ -242,7 +239,7 @@ export default function SkillSphere() {
           height: 6px;
           border-radius: 50%;
           margin-right: 6px;
-          box-shadow: 0 0 8px #f5a623;
+          box-shadow: 0 0 10px #f5a623, 0 0 20px rgba(245, 166, 35, 0.5);
         }
       `}</style>
 
@@ -250,27 +247,45 @@ export default function SkillSphere() {
       <svg
         width={size}
         height={size}
-        style={{ position: 'absolute', pointerEvents: 'none', zIndex: 0 }}
+        style={{ position: 'absolute', pointerEvents: 'none', zIndex: 0, overflow: 'visible' }}
       >
+        <defs>
+          <radialGradient id="sphereGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+            <stop offset="0%" stopColor="rgba(245, 166, 35, 0.05)" />
+            <stop offset="100%" stopColor="rgba(245, 166, 35, 0)" />
+          </radialGradient>
+          <filter id="orangeGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+
+        {/* Sphere Glow & Background */}
         <circle 
           cx={radius} cy={radius} r={radius} 
-          fill="rgba(15, 15, 15, 0.15)" 
-          stroke="rgba(245, 166, 35, 0.15)" strokeWidth="1"
+          fill="url(#sphereGradient)" 
+          stroke="rgba(245, 166, 35, 0.25)" 
+          strokeWidth="1.5"
+          filter="url(#orangeGlow)"
         />
+
+        {/* Latitude lines - Brighter and with glow */}
         {[0.15, 0.35, 0.5, 0.65, 0.85].map((v, i) => {
           const r = Math.sin(Math.acos(1 - 2 * v)) * radius;
           const y = radius - Math.cos(Math.acos(1 - 2 * v)) * radius;
           return (
             <ellipse
               key={`lat-${i}`} cx={radius} cy={y} rx={r} ry={r * 0.15}
-              fill="none" stroke="rgba(245, 166, 35, 0.08)" strokeWidth="0.5"
+              fill="none" stroke="rgba(245, 166, 35, 0.15)" strokeWidth="0.8"
             />
           );
         })}
+
+        {/* Longitude lines - Brighter */}
         {[0, 30, 60, 90, 120, 150].map((angle) => (
           <ellipse
             key={`long-${angle}`} cx={radius} cy={radius} rx={radius * 0.2} ry={radius}
-            fill="none" stroke="rgba(245, 166, 35, 0.08)" strokeWidth="0.5"
+            fill="none" stroke="rgba(245, 166, 35, 0.12)" strokeWidth="0.8"
             transform={`rotate(${angle}, ${radius}, ${radius})`}
           />
         ))}
@@ -297,7 +312,7 @@ export default function SkillSphere() {
             pointerEvents: 'auto',
             willChange: 'transform, opacity',
             opacity: 0,
-            userSelect: 'none', // DISABLE SELECTION
+            userSelect: 'none',
             WebkitUserSelect: 'none',
           }}
         >
@@ -307,10 +322,10 @@ export default function SkillSphere() {
               alt={skill.name}
               width={isMobile ? 32 : 40}
               height={isMobile ? 32 : 40}
-              onDragStart={(e) => e.preventDefault()} // DISABLE IMAGE DRAG
+              onDragStart={(e) => e.preventDefault()}
               style={{
                 objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 8px rgba(245,166,35,0.3))',
+                filter: 'drop-shadow(0 0 12px rgba(245,166,35,0.4))',
                 userSelect: 'none',
                 WebkitUserDrag: 'none'
               }}
@@ -324,13 +339,14 @@ export default function SkillSphere() {
                 color: 'var(--text-primary)',
                 textTransform: 'uppercase',
                 letterSpacing: '1.5px',
-                marginTop: '8px',
+                marginTop: '10px',
                 textAlign: 'center',
                 whiteSpace: 'nowrap',
                 pointerEvents: 'none',
                 display: 'flex',
                 alignItems: 'center',
-                transition: 'transform 0.3s ease, opacity 0.3s ease'
+                transition: 'transform 0.3s ease, opacity 0.3s ease',
+                textShadow: '0 0 8px rgba(0,0,0,0.8)'
               }}
             >
               <span className="skill-badge"></span>
