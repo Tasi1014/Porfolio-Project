@@ -10,31 +10,12 @@ import { HiDownload } from "react-icons/hi";
 import { FaPaintBrush, FaVideo, FaPen } from "react-icons/fa";
 import TextReveal from "./animations/TextReveal";
 
+import SkillSphere from './SkillSphere'
+
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 };
-
-const skillCards = [
-  {
-    icon: <FaPaintBrush />,
-    title: "Graphic Design",
-    accent: "#f5a623",
-    tools: "Photoshop, Illustrator",
-  },
-  {
-    icon: <FaVideo />,
-    title: "Video Editing",
-    accent: "#3b82f6",
-    tools: "Premiere Pro, After Effects",
-  },
-  {
-    icon: <FaPen />,
-    title: "Content Writing",
-    accent: "#22c55e",
-    tools: "Copywriting, SEO, Blogs, Brand Storytelling",
-  },
-];
 
 import useParallax from "../hooks/useParallax";
 
@@ -132,31 +113,20 @@ export default function About() {
               and a deep understanding of digital culture to every project.
             </p>
 
-            {/* Skill Cards */}
-            <div className="flex flex-col gap-3">
-              {skillCards.map((card) => (
-                <motion.div
-                  key={card.title}
-                  whileHover={{ x: 4 }}
-                  className="flex items-start gap-4 p-4 bg-bg-card border border-border rounded-xl transition-colors hover:border-border/60"
-                  style={{ borderLeftColor: card.accent, borderLeftWidth: "3px" }}
-                >
-                  <span
-                    className="text-lg mt-0.5 shrink-0"
-                    style={{ color: card.accent }}
-                  >
-                    {card.icon}
-                  </span>
-                  <div>
-                    <p className="font-semibold text-text-primary text-sm mb-0.5">
-                      {card.title}
-                    </p>
-                    <p className="text-xs text-text-secondary font-[family-name:var(--font-mono)]">
-                      {card.tools}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
+            {/* Skill Sphere Replacement */}
+            <div className="mt-8">
+              <p style={{ 
+                color: 'var(--text-secondary)', 
+                fontSize: '13px',
+                fontFamily: 'JetBrains Mono',
+                textTransform: 'uppercase',
+                letterSpacing: '2px',
+                marginBottom: '24px',
+                textAlign: 'center'
+              }}>
+                Tools & Skills — Drag to explore
+              </p>
+              <SkillSphere />
             </div>
           </motion.div>
         </div>
