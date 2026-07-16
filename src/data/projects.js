@@ -77,10 +77,25 @@ const projects = [
     tags: ["Reel", "Video Edit", "Transitions"],
     tools: ["Premiere Pro"],
   },
+  {
+    id: 6,
+    type: "video",
+    category: "Video Editing",
+    platform: "instagram",
+    title: "Instagram Reel Edit",
+    brand: "ktmevents.aus",
+    description:
+      "A Tour Promotion Instagram reel of Sushant KC.",
+    thumbnail: "/SushantKC.png",
+    tiktokUrl: null,
+    instagramUrl: "https://www.instagram.com/reel/DaSGDq0RsCW/?igsh=MThxa2dsOGx2ZTV6ZQ%3D%3D",
+    tags: ["Reel", "Video Edit", "Transitions"],
+    tools: ["Premiere Pro"],
+  },
   
   // ==================== GRAPHIC DESIGN PROJECTS ====================
   {
-    id: 6,
+    id: 7,
     type: "graphic",
     category: "Graphic Design",
     platform: null,
@@ -94,7 +109,7 @@ const projects = [
     tools: ["Illustrator", "Photoshop"],
   },
   {
-    id: 7,
+    id: 8,
     type: "graphic",
     category: "Graphic Design",
     platform: null,
@@ -109,7 +124,7 @@ const projects = [
     tools: ["Photoshop", "InDesign"],
   },
   {
-    id: 8,
+    id: 9,
     type: "graphic",
     category: "Graphic Design",
     platform: null,
@@ -124,7 +139,7 @@ const projects = [
     tools: [ "Illustrator"],
   },
   {
-    id: 9,
+    id: 10,
     type: "graphic",
     category: "Graphic Design",
     platform: null,
@@ -139,7 +154,7 @@ const projects = [
     tools: [ "Photoshop"],
   },
   {
-    id: 10,
+    id: 11,
     type: "graphic",
     category: "Graphic Design",
     platform: null,
@@ -154,7 +169,7 @@ const projects = [
     tools: ["", "Photoshop"],
   },
   {
-    id: 11,
+    id: 12,
     type: "graphic",
     category: "Graphic Design",
     platform: null,
@@ -168,7 +183,7 @@ const projects = [
     tools: ["Illustrator", "Photoshop"],
   },
     {
-    id: 12,
+    id: 13,
     type: "graphic",
     category: "Graphic Design",
     platform: null,
@@ -181,6 +196,36 @@ const projects = [
     instagramUrl: null,
     tags: ["Packaging", "Illustration", "Branding"],
     tools: ["Illustrator", "Photoshop"],
+  },
+  {
+    id: 14,
+    type: "video",
+    category: "Video Editing",
+    platform: "tiktok",
+    title: "Brand promotion",
+    brand: "Billin.space",
+    description:
+      "A brand promotion video for Billing Software.",
+    thumbnail: "/billin_space.png",
+    tiktokUrl: "https://www.tiktok.com/@billin.space/video/7645326618830949652",
+    instagramUrl: null,
+    tags: ["Software", "Billing"],
+    tools: ["Premiere Pro"],
+  },
+  {
+    id: 15,
+    type: "video",
+    category: "Video Editing",
+    platform: "tiktok",
+    title: "Brand promotion",
+    brand: "Billin.space",
+    description:
+      "A brand promotion video for Billing Software.",
+    thumbnail: "/billin.png",
+    tiktokUrl: "https://www.tiktok.com/@billin.space/video/7645326618830949652",
+    instagramUrl: null,
+    tags: ["Software", "Billing"],
+    tools: ["Premiere Pro"],
   },
 ];
 
