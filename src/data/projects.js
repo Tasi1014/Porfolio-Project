@@ -207,7 +207,7 @@ const projects = [
     description:
       "A brand promotion video for Billing Software.",
     thumbnail: "/billin_space.png",
-    tiktokUrl: "https://www.tiktok.com/@billin.space/video/7645326618830949652",
+    tiktokUrl: "https://www.tiktok.com/embed/v2/7645326618830949652",
     instagramUrl: null,
     tags: ["Software", "Billing"],
     tools: ["Premiere Pro"],
@@ -222,7 +222,7 @@ const projects = [
     description:
       "A brand promotion video for Billing Software.",
     thumbnail: "/billin.png",
-    tiktokUrl: "https://www.tiktok.com/@billin.space/video/7645326618830949652",
+    tiktokUrl: "https://www.tiktok.com/embed/v2/7645326618830949652",
     instagramUrl: null,
     tags: ["Software", "Billing"],
     tools: ["Premiere Pro"],
