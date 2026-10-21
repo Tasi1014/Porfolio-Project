@@ -64,37 +64,48 @@ export default function Navbar() {
           Madhav<span className="text-accent">.</span>
         </a>
 
-        {/* Desktop: Centered Nav Links */}
-        <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={(e) => handleClick(e, link.href)}
-              className={`relative text-sm font-medium transition-colors duration-200 hover:text-text-primary ${
-                activeSection === link.href.slice(1)
-                  ? "text-accent"
-                  : "text-text-secondary"
-              }`}
-            >
-              {link.label}
-              {activeSection === link.href.slice(1) && (
-                <motion.span
-                  layoutId="nav-underline"
-                  className="absolute -bottom-1 left-0 w-full h-0.5 bg-accent rounded-full"
-                />
-              )}
-            </a>
-          ))}
+        {/* Desktop: Centered Floating Animated Nav Bar */}
+        <div className="hidden md:flex items-center">
+          <div className="relative flex items-center gap-1 p-1.5 bg-[#141414]/80 backdrop-blur-xl border border-white/10 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)]">
+            {navLinks.map((link) => {
+              const isActive = activeSection === link.href.slice(1);
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={(e) => handleClick(e, link.href)}
+                  className={`relative px-4 py-1.5 text-sm font-medium rounded-full transition-colors duration-200 z-10 ${
+                    isActive
+                      ? "text-accent font-semibold"
+                      : "text-text-secondary hover:text-white"
+                  }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="floating-nav-pill"
+                      className="absolute inset-0 bg-accent/15 border border-accent/40 rounded-full shadow-[0_0_16px_rgba(245,166,35,0.25)]"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    {isActive && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                    )}
+                    {link.label}
+                  </span>
+                </a>
+              );
+            })}
+          </div>
         </div>
 
         {/* Desktop: Let's Talk button */}
         <motion.a
           href="#contact"
           onClick={(e) => handleClick(e, "#contact")}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          className="hidden md:flex items-center px-5 py-2 bg-accent text-bg-primary font-semibold rounded-full text-sm cursor-pointer hover:brightness-110 transition-all shrink-0"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="hidden md:flex items-center px-5 py-2 bg-accent text-bg-primary font-bold rounded-full text-sm cursor-pointer hover:brightness-110 shadow-lg shadow-accent/25 transition-all shrink-0 animate-bounce"
         >
           Let&apos;s Talk
         </motion.a>
@@ -167,7 +178,7 @@ export default function Navbar() {
               <a
                 href="#contact"
                 onClick={(e) => handleClick(e, "#contact")}
-                className="mt-4 text-center px-6 py-3 bg-accent text-bg-primary font-semibold rounded-full text-sm"
+                className="mt-4 text-center px-6 py-3 bg-accent text-bg-primary font-bold rounded-full text-sm animate-bounce shadow-lg shadow-accent/20"
               >
                 Let&apos;s Talk
               </a>
