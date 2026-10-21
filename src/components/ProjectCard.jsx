@@ -7,7 +7,7 @@
 import ReactGA from 'react-ga4';
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { FaTiktok, FaInstagram, FaPlay, FaExpand } from "react-icons/fa";
+import { FaPlay, FaExpand, FaVideo } from "react-icons/fa";
 import VanillaTilt from "vanilla-tilt";
 
 // Category color map
@@ -80,15 +80,10 @@ export default function ProjectCard({ project, onClick, index }) {
           )}
         </div>
 
-        {/* Platform Badge */}
-        {project.platform === "tiktok" && (
-          <span className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-tiktok text-white text-[10px] font-bold rounded-md font-[family-name:var(--font-mono)]">
-            <FaTiktok className="text-xs" /> TikTok
-          </span>
-        )}
-        {project.platform === "instagram" && (
-          <span className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 text-white text-[10px] font-bold rounded-md font-[family-name:var(--font-mono)]">
-            <FaInstagram className="text-xs" /> Instagram
+        {/* Video Badge */}
+        {isVideo && (
+          <span className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-accent/90 text-bg-primary text-[10px] font-bold rounded-md font-[family-name:var(--font-mono)]">
+            <FaVideo className="text-xs" /> Video
           </span>
         )}
       </div>

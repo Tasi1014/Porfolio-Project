@@ -1,12 +1,12 @@
 /**
  * Projects.jsx — Projects section with filter tabs
- * Features: category filter with AnimatePresence transitions,
+ * Features: real-time Firestore data, category filter with AnimatePresence transitions,
  * responsive grid, opens VideoModal or ImageLightbox
  */
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import projects from "../data/projects";
+import { useProjects } from "../hooks/useProjects";
 import ProjectCard from "./ProjectCard";
 import VideoModal from "./VideoModal";
 import ImageLightbox from "./ImageLightbox";
@@ -19,16 +19,19 @@ export default function Projects() {
   const [videoModal, setVideoModal] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
+  // ── Real-time Firestore data ────────────────────────────────────────────────
+  const { projects, loading } = useProjects();
+
   // Filtered projects
   const filtered = useMemo(() => {
     if (activeTab === "All") return projects;
     return projects.filter((p) => p.category === activeTab);
-  }, [activeTab]);
+  }, [activeTab, projects]);
 
   // All graphic projects (for lightbox navigation)
   const graphicProjects = useMemo(
     () => projects.filter((p) => p.type === "graphic"),
-    []
+    [projects]
   );
 
   // Handle card click
@@ -77,25 +80,46 @@ export default function Projects() {
           ))}
         </div>
 
-        {/* Project Grid */}
-        <motion.div
-          layout
-          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
-        >
-          <AnimatePresence mode="popLayout">
-            {filtered.map((project, i) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                onClick={handleCardClick}
-                index={i}
-              />
+        {/* Loading skeleton */}
+        {loading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="bg-bg-card border border-border rounded-xl overflow-hidden animate-pulse"
+              >
+                <div className="aspect-video bg-bg-elevated" />
+                <div className="p-4 space-y-2">
+                  <div className="h-3 bg-bg-elevated rounded w-1/3" />
+                  <div className="h-4 bg-bg-elevated rounded w-2/3" />
+                  <div className="h-3 bg-bg-elevated rounded w-1/2" />
+                </div>
+              </div>
             ))}
-          </AnimatePresence>
-        </motion.div>
+          </div>
+        )}
+
+        {/* Project Grid */}
+        {!loading && (
+          <motion.div
+            layout
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
+          >
+            <AnimatePresence mode="popLayout">
+              {filtered.map((project, i) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  onClick={handleCardClick}
+                  index={i}
+                />
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        )}
 
         {/* Empty state */}
-        {filtered.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <p className="text-center text-text-secondary py-20 font-[family-name:var(--font-mono)] text-sm">
             No projects in this category yet.
           </p>

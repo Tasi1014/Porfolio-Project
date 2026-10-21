@@ -1,9 +1,11 @@
 /**
  * App.jsx — Root application component
- * Assembles all sections into a single-page scroll layout
+ * Assembles all sections into a single-page scroll layout.
+ * /admin route renders the separate Admin Panel.
  */
 
 import { useState, useEffect } from "react";
+import { Routes, Route } from "react-router-dom";
 import ReactGA from 'react-ga4';
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
@@ -14,14 +16,15 @@ import Footer from "./components/Footer";
 import WhatsAppButton from "./components/WhatsAppButton";
 import ScrollProgressBar from "./components/ScrollProgressBar";
 import IntroScreen from "./components/IntroScreen";
+import AdminRoute from "./pages/admin/AdminRoute";
 
-export default function App() {
+// ── Portfolio (main public page) ──────────────────────────────────────────────
+function Portfolio() {
   const [showIntro, setShowIntro] = useState(() => {
     return !sessionStorage.getItem("intro-shown");
   });
 
   const [introComplete, setIntroComplete] = useState(() => {
-    // If intro won't show, animations should work immediately
     return sessionStorage.getItem("intro-shown") === "true";
   });
 
@@ -59,19 +62,17 @@ export default function App() {
                 action: 'Section Viewed',
                 label: label
               })
-              // Stop observing after first view
               observer.unobserve(element)
             }
           })
         },
-        { threshold: 0.3 }   // fires when 30% of section is visible
+        { threshold: 0.3 }
       )
 
       observer.observe(element)
       return observer
     })
 
-    // Cleanup
     return () => {
       observers.forEach(obs => obs?.disconnect())
     }
@@ -85,7 +86,6 @@ export default function App() {
       <Navbar />
       <main>
         <Hero introComplete={introComplete} />
-
         <About />
         <Projects />
         <Contact />
@@ -93,5 +93,17 @@ export default function App() {
       <Footer />
       <WhatsAppButton />
     </>
+  );
+}
+
+// ── Root with routing ─────────────────────────────────────────────────────────
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Portfolio />} />
+      <Route path="/admin" element={<AdminRoute />} />
+      {/* Catch all — redirect to home */}
+      <Route path="*" element={<Portfolio />} />
+    </Routes>
   );
 }
