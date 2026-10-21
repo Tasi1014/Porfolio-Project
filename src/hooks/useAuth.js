@@ -5,13 +5,18 @@
 
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../lib/firebase";
+import { auth, isFirebaseConfigured } from "../lib/firebase";
 
 export function useAuth() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isFirebaseConfigured);
 
   useEffect(() => {
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
     const unsub = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
@@ -19,5 +24,5 @@ export function useAuth() {
     return () => unsub();
   }, []);
 
-  return { user, loading };
+  return { user, loading, isConfigured: isFirebaseConfigured };
 }
