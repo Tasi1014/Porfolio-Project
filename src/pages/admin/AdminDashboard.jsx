@@ -992,7 +992,7 @@ export default function AdminDashboard() {
               <RiAdminLine className="text-accent text-lg" />
             </div>
             <div>
-              <h1 className="font-bold text-text-primary text-base leading-tight">Portfolio Admin</h1>
+              <h1 className="font-bold text-text-primary text-base leading-tight">Madhav</h1>
               <p className="text-text-secondary text-[10px] font-[family-name:var(--font-mono)]">
                 {projects.length} projects
               </p>

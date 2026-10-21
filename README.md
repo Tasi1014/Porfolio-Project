@@ -1,4 +1,4 @@
-# Alex — Creative Portfolio
+# Madhav - Creative Portfolio
 
 A premium, single-page scroll portfolio website built with React, Tailwind CSS, and Framer Motion. Designed for creative professionals (Graphic Designers, Video Editors, Content Writers).
 
