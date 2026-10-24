@@ -91,10 +91,10 @@ export default function VideoModal({ project, onClose }) {
         {driveFileId ? (
           <div className="relative w-full bg-black flex-shrink-0 flex flex-col">
             {/* 
-              Mobile: Use a taller height (60vh) to fit vertical videos.
-              Desktop: Fall back to standard aspect-video (16:9) 
+              Mobile: We use a slightly taller container to fit vertical videos.
+              Desktop: Standard aspect-video (16:9) 
             */}
-            <div className="relative w-full h-[60vh] sm:h-auto sm:aspect-video overflow-hidden">
+            <div className="relative w-full h-[60vh] sm:h-auto sm:aspect-video overflow-hidden bg-black">
               <iframe
                 src={getDrivePreviewUrl(driveFileId)}
                 title={project.title}
@@ -104,15 +104,15 @@ export default function VideoModal({ project, onClose }) {
               />
             </div>
             
-            {/* Fallback button for mobile browsers that block iframe controls */}
-            <div className="bg-black/80 p-2 text-center border-t border-white/10">
+            {/* Fallback link for both Mobile and Desktop */}
+            <div className="bg-bg-elevated p-3 text-center border-t border-white/10">
               <a 
                 href={project.driveUrl || `https://drive.google.com/file/d/${driveFileId}/view`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-accent hover:text-white transition-colors underline"
+                className="text-xs text-accent hover:text-white transition-colors underline flex items-center justify-center gap-1"
               >
-                Video controls not working? Open directly in Google Drive
+                Video controls overlapping or not working? Open directly in Google Drive
               </a>
             </div>
           </div>
