@@ -1,46 +1,35 @@
 /**
  * useProjects.js — Real-time Firestore projects listener
- * Replaces the static src/data/projects.js import.
+ * Directly listens to Firestore 'projects' collection.
+ * No hardcoded fallback — displays empty state when Firestore is empty.
  * Returns { projects, loading, error }
  */
 
 import { useState, useEffect } from "react";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { subscribeToProjects } from "../services/projectService";
 import { db } from "../lib/firebase";
-import fallbackProjects from "../data/projects";
 
 export function useProjects() {
-  const [projects, setProjects] = useState(fallbackProjects);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(Boolean(db));
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!db) {
-      setProjects(fallbackProjects);
+      setProjects([]);
       setLoading(false);
       return;
     }
 
-    const q = query(collection(db, "projects"), orderBy("order", "asc"));
-
-    const unsub = onSnapshot(
-      q,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const data = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setProjects(data);
-        } else {
-          setProjects(fallbackProjects);
-        }
+    const unsub = subscribeToProjects(
+      (data) => {
+        setProjects(data);
         setLoading(false);
       },
       (err) => {
-        console.error("Firestore error, falling back to static projects:", err);
+        console.error("Firestore error in useProjects:", err);
         setError(err.message);
-        setProjects(fallbackProjects);
+        setProjects([]);
         setLoading(false);
       }
     );

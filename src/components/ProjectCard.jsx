@@ -14,7 +14,6 @@ import VanillaTilt from "vanilla-tilt";
 const categoryColors = {
   "Graphic Design": "#f5a623",
   "Video Editing": "#3b82f6",
-  "Content Writing": "#22c55e",
 };
 
 export default function ProjectCard({ project, onClick, index }) {

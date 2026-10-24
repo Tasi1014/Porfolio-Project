@@ -1,13 +1,14 @@
 /**
- * VideoModal.jsx — Native HTML5 video player modal
- * Replaces TikTok/Instagram iframes with direct Cloudinary video playback.
- * Fully responsive, keyboard-accessible, mobile-friendly.
+ * VideoModal.jsx — Responsive Video Player Modal
+ * Supports Google Drive preview embeds (iframe) and fallback direct video playback.
+ * Fully responsive, keyboard-accessible, dark-themed UI matching existing design.
  */
 
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { HiX } from "react-icons/hi";
 import { FaPlay } from "react-icons/fa";
+import { extractDriveFileId, getDrivePreviewUrl } from "../services/projectService";
 
 const backdrop = {
   hidden: { opacity: 0 },
@@ -28,7 +29,9 @@ export default function VideoModal({ project, onClose }) {
 
   // Close on Escape key
   useEffect(() => {
-    const handler = (e) => { if (e.key === "Escape") onClose(); };
+    const handler = (e) => {
+      if (e.key === "Escape") onClose();
+    };
     window.addEventListener("keydown", handler);
     document.body.style.overflow = "hidden";
     return () => {
@@ -37,7 +40,7 @@ export default function VideoModal({ project, onClose }) {
     };
   }, [onClose]);
 
-  // Pause video when modal closes
+  // Pause HTML5 video if running
   useEffect(() => {
     return () => {
       if (videoRef.current) videoRef.current.pause();
@@ -46,7 +49,13 @@ export default function VideoModal({ project, onClose }) {
 
   if (!project) return null;
 
-  const hasVideo = Boolean(project.videoUrl);
+  // Resolve Drive File ID or Video URL
+  const driveFileId =
+    project.driveFileId ||
+    extractDriveFileId(project.driveUrl) ||
+    extractDriveFileId(project.videoUrl);
+
+  const hasVideo = Boolean(driveFileId || project.videoUrl);
 
   return (
     <motion.div
@@ -67,19 +76,29 @@ export default function VideoModal({ project, onClose }) {
         animate="visible"
         exit="hidden"
         onClick={(e) => e.stopPropagation()}
-        className="relative z-10 bg-bg-card border border-border rounded-2xl overflow-hidden w-full max-w-2xl max-h-[92vh] flex flex-col"
+        className="relative z-10 bg-bg-card border border-border rounded-2xl overflow-hidden w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl"
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 text-white hover:text-accent hover:bg-black/80 transition cursor-pointer"
+          className="absolute top-3 right-3 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/60 text-white hover:text-accent hover:bg-black/90 transition cursor-pointer border border-white/10"
           aria-label="Close video"
         >
           <HiX className="text-lg" />
         </button>
 
-        {/* ── Video Player ─────────────────────────────────────────────── */}
-        {hasVideo ? (
+        {/* ── Video Player (Google Drive Iframe or Native Video) ─────────── */}
+        {driveFileId ? (
+          <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex-shrink-0">
+            <iframe
+              src={getDrivePreviewUrl(driveFileId)}
+              title={project.title}
+              className="border-none rounded-xl w-full h-full aspect-video"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+            />
+          </div>
+        ) : hasVideo ? (
           <div className="relative w-full bg-black flex-shrink-0">
             <video
               ref={videoRef}
@@ -95,7 +114,7 @@ export default function VideoModal({ project, onClose }) {
             </video>
           </div>
         ) : (
-          /* ── No video yet: show thumbnail with a message ──────────── */
+          /* ── No video yet: show thumbnail placeholder ─────────────── */
           <div className="relative w-full aspect-video bg-black flex-shrink-0">
             <img
               src={project.thumbnail}
@@ -107,9 +126,9 @@ export default function VideoModal({ project, onClose }) {
                 <FaPlay className="text-white/60 text-2xl ml-1" />
               </span>
               <p className="text-white/50 text-xs font-[family-name:var(--font-mono)] text-center px-4">
-                Video not uploaded yet.
+                Google Drive video link not added yet.
                 <br />
-                Upload from the admin panel.
+                Add link from the admin panel.
               </p>
             </div>
           </div>

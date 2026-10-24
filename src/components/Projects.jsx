@@ -12,7 +12,7 @@ import VideoModal from "./VideoModal";
 import ImageLightbox from "./ImageLightbox";
 import TextReveal from "./animations/TextReveal";
 
-const tabs = ["All", "Graphic Design", "Video Editing", "Content Writing"];
+const tabs = ["All", "Graphic Design", "Video Editing"];
 
 export default function Projects() {
   const [activeTab, setActiveTab] = useState("All");

@@ -1,28 +1,27 @@
 /**
  * AdminDashboard.jsx — Portfolio content management (Full CRUD)
  * Features:
- *  - CREATE: Add project with Cloudinary upload (thumbnail + video)
+ *  - CREATE: Add project with Cloudinary image upload & Google Drive video link
  *  - READ:   Real-time Firestore listener with stats + filter tabs
- *  - UPDATE: Edit all fields + replace thumbnail/video
- *  - DELETE: Delete with confirmation
- *  - PREVIEW: Same VideoModal / ImageLightbox as the public portfolio
- *  - Mobile-first responsive modals, bottom-sheet adaptivity, and celebratory success screens
+ *  - UPDATE: Edit all fields, replace thumbnail, update Google Drive video link
+ *  - DELETE: Delete with confirmation via projectService
+ *  - PREVIEW: Same VideoModal (Google Drive iframe) / ImageLightbox as public portfolio
+ *  - Quick Google Drive link update directly from project card
  */
 
 import { useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  collection,
-  addDoc,
-  deleteDoc,
-  updateDoc,
-  doc,
-  serverTimestamp,
-} from "firebase/firestore";
 import { signOut } from "firebase/auth";
-import { db, auth } from "../../lib/firebase";
+import { auth } from "../../lib/firebase";
 import { uploadToCloudinary } from "../../lib/cloudinary";
 import { useProjects } from "../../hooks/useProjects";
+import {
+  createProject,
+  updateProject,
+  deleteProject,
+  extractDriveFileId,
+  getDrivePreviewUrl,
+} from "../../services/projectService";
 import VideoModal from "../../components/VideoModal";
 import ImageLightbox from "../../components/ImageLightbox";
 import {
@@ -31,31 +30,29 @@ import {
   HiLogout,
   HiX,
   HiPhotograph,
-  HiVideoCamera,
   HiCheckCircle,
   HiPencil,
   HiEye,
+  HiLink,
 } from "react-icons/hi";
 import { RiAdminLine } from "react-icons/ri";
-import { FaVideo, FaPalette, FaPencilAlt } from "react-icons/fa";
+import { FaVideo, FaPalette } from "react-icons/fa";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-const CATEGORIES = ["Video Editing", "Graphic Design", "Content Writing"];
+const CATEGORIES = ["Video Editing", "Graphic Design"];
 const TABS = ["All", ...CATEGORIES];
 
 const categoryIcons = {
   "Video Editing": <FaVideo className="text-blue-400" />,
   "Graphic Design": <FaPalette className="text-amber-400" />,
-  "Content Writing": <FaPencilAlt className="text-emerald-400" />,
 };
 
 const categoryColors = {
   "Graphic Design": "#f5a623",
   "Video Editing": "#3b82f6",
-  "Content Writing": "#22c55e",
 };
 
-// ── Upload Progress Bar ────────────────────────────────────────────────────────
+// ── Upload Progress Bar (Images only) ──────────────────────────────────────────
 function UploadProgress({ label, progress, done }) {
   return (
     <div className="space-y-1.5 p-3 rounded-xl bg-bg-elevated/70 border border-white/5">
@@ -86,7 +83,7 @@ function UploadProgress({ label, progress, done }) {
 }
 
 // ── Delete Confirmation Modal ──────────────────────────────────────────────────
-function DeleteConfirm({ project, onConfirm, onCancel }) {
+function DeleteConfirm({ project, onConfirm, onCancel, deleting }) {
   return (
     <motion.div
       className="fixed inset-0 z-[200] flex items-center justify-center p-4"
@@ -109,25 +106,27 @@ function DeleteConfirm({ project, onConfirm, onCancel }) {
           </span>
           <div>
             <h3 className="font-bold text-text-primary text-base sm:text-lg">Delete Project?</h3>
-            <p className="text-text-secondary text-[11px] sm:text-xs">Cannot be recovered</p>
+            <p className="text-text-secondary text-[11px] sm:text-xs">Permanent deletion</p>
           </div>
         </div>
         <p className="text-text-secondary text-xs sm:text-sm mb-6 leading-relaxed">
           <span className="text-text-primary font-medium">"{project.title}"</span> will be
-          permanently removed from your database and portfolio.
+          permanently removed from your Firestore database and live portfolio.
         </p>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 py-3 rounded-xl bg-bg-elevated text-text-secondary hover:text-text-primary border border-white/10 text-xs sm:text-sm font-semibold transition cursor-pointer"
+            disabled={deleting}
+            className="flex-1 py-3 rounded-xl bg-bg-elevated text-text-secondary hover:text-text-primary border border-white/10 text-xs sm:text-sm font-semibold transition cursor-pointer disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm font-semibold transition cursor-pointer shadow-lg shadow-red-500/20"
+            disabled={deleting}
+            className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm font-semibold transition cursor-pointer shadow-lg shadow-red-500/20 disabled:opacity-50"
           >
-            Delete
+            {deleting ? "Deleting..." : "Delete"}
           </button>
         </div>
       </motion.div>
@@ -135,28 +134,38 @@ function DeleteConfirm({ project, onConfirm, onCancel }) {
   );
 }
 
-// ── Quick Video Upload Modal ───────────────────────────────────────────────────
-function QuickVideoUpload({ project, onClose }) {
-  const [file, setFile] = useState(null);
-  const [progress, setProgress] = useState(0);
+// ── Quick Google Drive Video Link Modal ─────────────────────────────────────────
+function QuickDriveLinkModal({ project, onClose }) {
+  const [driveUrl, setDriveUrl] = useState(
+    project.driveUrl || (project.driveFileId ? getDrivePreviewUrl(project.driveFileId) : "")
+  );
+  const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
-  const fileRef = useRef();
 
-  const handleUpload = async () => {
-    if (!file) return;
-    setUploading(true);
+  const handleSave = async (e) => {
+    e.preventDefault();
     setError("");
+
+    const fileId = extractDriveFileId(driveUrl);
+    if (!fileId) {
+      setError("Please paste a valid Google Drive link (e.g. https://drive.google.com/file/d/.../view).");
+      return;
+    }
+
+    setSaving(true);
     try {
-      const { url } = await uploadToCloudinary(file, setProgress);
-      await updateDoc(doc(db, "projects", project.id), { videoUrl: url });
+      await updateProject(project.id, {
+        driveFileId: fileId,
+        driveUrl: driveUrl.trim(),
+        videoUrl: getDrivePreviewUrl(fileId),
+      });
       setDone(true);
-      setTimeout(() => onClose(), 1500);
+      setTimeout(() => onClose(), 1200);
     } catch (err) {
-      setError("Upload failed: " + err.message);
+      setError("Failed to save: " + err.message);
     } finally {
-      setUploading(false);
+      setSaving(false);
     }
   };
 
@@ -180,7 +189,7 @@ function QuickVideoUpload({ project, onClose }) {
 
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
           <div>
-            <h3 className="font-bold text-text-primary text-base sm:text-lg">Upload Video</h3>
+            <h3 className="font-bold text-text-primary text-base sm:text-lg">Google Drive Video Link</h3>
             <p className="text-text-secondary text-xs truncate max-w-[240px] mt-0.5">{project.title}</p>
           </div>
           <button
@@ -201,67 +210,45 @@ function QuickVideoUpload({ project, onClose }) {
             >
               <HiCheckCircle className="text-green-400 text-4xl" />
             </motion.div>
-            <h4 className="text-lg font-bold text-white mb-1">Video Uploaded!</h4>
-            <p className="text-xs text-text-secondary">Project is now updated on your live portfolio.</p>
+            <h4 className="text-lg font-bold text-white mb-1">Drive Link Saved!</h4>
+            <p className="text-xs text-text-secondary">Video is now playable via Google Drive on your portfolio.</p>
           </div>
         ) : (
-          <>
-            <div
-              onClick={() => fileRef.current?.click()}
-              className="border-2 border-dashed border-white/15 hover:border-accent/60 bg-bg-elevated/40 rounded-2xl cursor-pointer transition mb-4 p-4"
-            >
-              <div className="h-28 flex flex-col items-center justify-center gap-2 text-text-secondary">
-                <HiVideoCamera className={`text-3xl ${file ? "text-accent" : "text-text-muted"}`} />
-                {file ? (
-                  <div className="text-center px-2">
-                    <p className="text-xs text-accent font-semibold truncate max-w-[240px]">{file.name}</p>
-                    <p className="text-[10px] text-text-secondary mt-0.5">
-                      {(file.size / (1024 * 1024)).toFixed(1)} MB • Click to replace
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-xs font-medium text-text-primary">Click to select video</p>
-                    <p className="text-[10px] text-text-secondary">MP4, MOV, WEBM (up to 500MB)</p>
-                  </>
-                )}
+          <form onSubmit={handleSave} className="space-y-4">
+            <div>
+              <label className="block text-[11px] sm:text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">
+                Google Drive Share URL
+              </label>
+              <div className="relative">
+                <input
+                  type="url"
+                  placeholder="https://drive.google.com/file/d/.../view"
+                  value={driveUrl}
+                  onChange={(e) => setDriveUrl(e.target.value)}
+                  required
+                  className="w-full pl-9 pr-3.5 py-2.5 sm:py-3 bg-bg-elevated/80 border border-white/10 rounded-xl sm:rounded-2xl text-text-primary placeholder:text-text-secondary/40 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition"
+                />
+                <HiLink className="absolute left-3 top-3.5 text-text-secondary text-base" />
               </div>
+              <p className="text-[10px] text-text-secondary/70 mt-1.5 leading-relaxed">
+                Make sure file sharing is set to <strong>"Anyone with the link can view"</strong> in Google Drive.
+              </p>
             </div>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="video/*"
-              onChange={(e) => setFile(e.target.files[0])}
-              className="hidden"
-            />
-
-            {progress > 0 && (
-              <div className="mb-4">
-                <UploadProgress label="Uploading video..." progress={progress} done={done} />
-              </div>
-            )}
 
             {error && (
-              <p className="text-red-400 text-xs mb-4 bg-red-500/10 border border-red-500/20 rounded-xl px-3.5 py-2.5">
+              <p className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-xl px-3.5 py-2.5">
                 {error}
               </p>
             )}
 
             <button
-              onClick={handleUpload}
-              disabled={!file || uploading}
+              type="submit"
+              disabled={saving}
               className="w-full py-3.5 bg-accent text-bg-primary font-bold rounded-xl sm:rounded-2xl text-sm hover:brightness-110 active:scale-[0.98] transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-accent/20"
             >
-              {uploading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-bg-primary/30 border-t-bg-primary rounded-full animate-spin" />
-                  Uploading Video ({progress}%)...
-                </span>
-              ) : (
-                "Upload Video"
-              )}
+              {saving ? "Saving Link..." : "Save Drive Link"}
             </button>
-          </>
+          </form>
         )}
       </motion.div>
     </motion.div>
@@ -279,25 +266,22 @@ function EditProjectModal({ project, onClose }) {
     tools: (project.tools || []).join(", "),
   });
 
+  // Google Drive Link
+  const [driveUrl, setDriveUrl] = useState(
+    project.driveUrl || (project.driveFileId ? getDrivePreviewUrl(project.driveFileId) : "")
+  );
+
   // Thumbnail
   const [thumbFile, setThumbFile] = useState(null);
   const [thumbPreview, setThumbPreview] = useState(project.thumbnail || null);
   const [thumbProgress, setThumbProgress] = useState(0);
   const [thumbDone, setThumbDone] = useState(false);
 
-  // Video
-  const [videoFile, setVideoFile] = useState(null);
-  const [videoProgress, setVideoProgress] = useState(0);
-  const [videoDone, setVideoDone] = useState(false);
-  const [removeVideo, setRemoveVideo] = useState(false);
-
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
   const thumbRef = useRef();
-  const videoRef = useRef();
-
   const isVideo = form.category === "Video Editing";
 
   const handleChange = (field) => (e) =>
@@ -312,25 +296,51 @@ function EditProjectModal({ project, onClose }) {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    setSaving(true);
     setError("");
+
+    // Form validations
+    if (!form.title.trim()) {
+      setError("Project title is required.");
+      return;
+    }
+    if (!form.brand.trim()) {
+      setError("Brand/Client name is required.");
+      return;
+    }
+    if (!form.description.trim()) {
+      setError("Description is required.");
+      return;
+    }
+    if (!thumbPreview && !thumbFile) {
+      setError("Thumbnail image is required.");
+      return;
+    }
+
+    let driveFileId = project.driveFileId || null;
+    let finalVideoUrl = project.videoUrl || null;
+
+    if (isVideo) {
+      if (!driveUrl.trim()) {
+        setError("Google Drive video link is required for Video Editing projects.");
+        return;
+      }
+      const extractedId = extractDriveFileId(driveUrl);
+      if (!extractedId) {
+        setError("Please enter a valid Google Drive video share link.");
+        return;
+      }
+      driveFileId = extractedId;
+      finalVideoUrl = getDrivePreviewUrl(extractedId);
+    }
+
+    setSaving(true);
 
     try {
       let thumbnailUrl = project.thumbnail;
-      let videoUrl = removeVideo ? null : project.videoUrl;
-
-      // Upload new thumbnail if selected
       if (thumbFile) {
         const { url } = await uploadToCloudinary(thumbFile, setThumbProgress);
         thumbnailUrl = url;
         setThumbDone(true);
-      }
-
-      // Upload new video if selected
-      if (videoFile) {
-        const { url } = await uploadToCloudinary(videoFile, setVideoProgress);
-        videoUrl = url;
-        setVideoDone(true);
       }
 
       const updates = {
@@ -340,15 +350,16 @@ function EditProjectModal({ project, onClose }) {
         category: form.category,
         type: form.category === "Video Editing" ? "video" : "graphic",
         thumbnail: thumbnailUrl,
-        videoUrl,
+        driveFileId: isVideo ? driveFileId : null,
+        driveUrl: isVideo ? driveUrl.trim() : null,
+        videoUrl: isVideo ? finalVideoUrl : null,
         tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
         tools: form.tools.split(",").map((t) => t.trim()).filter(Boolean),
-        updatedAt: serverTimestamp(),
       };
 
-      await updateDoc(doc(db, "projects", project.id), updates);
+      await updateProject(project.id, updates);
       setSuccess(true);
-      setTimeout(() => onClose(), 1500);
+      setTimeout(() => onClose(), 1400);
     } catch (err) {
       console.error(err);
       setError("Save failed: " + err.message);
@@ -375,10 +386,8 @@ function EditProjectModal({ project, onClose }) {
         onClick={(e) => e.stopPropagation()}
         className="relative z-10 bg-bg-card border border-white/10 rounded-t-[28px] sm:rounded-3xl w-full sm:max-w-xl max-h-[92vh] sm:max-h-[88vh] flex flex-col shadow-2xl overflow-hidden"
       >
-        {/* Handle (mobile) */}
         <div className="w-12 h-1.5 rounded-full bg-white/20 mx-auto my-2.5 sm:hidden shrink-0" />
 
-        {/* Sticky Header */}
         <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 sm:py-4 border-b border-white/10 bg-bg-card/95 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-2.5">
             <span className="w-8 h-8 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center">
@@ -399,7 +408,6 @@ function EditProjectModal({ project, onClose }) {
           </button>
         </div>
 
-        {/* Success View */}
         {success ? (
           <div className="flex flex-col items-center justify-center py-12 sm:py-16 px-6 text-center flex-1">
             <motion.div
@@ -414,7 +422,7 @@ function EditProjectModal({ project, onClose }) {
               Changes Saved!
             </h3>
             <p className="text-text-secondary text-xs sm:text-sm max-w-xs sm:max-w-sm mb-6 leading-relaxed">
-              Your project details and media updates have been published in real-time.
+              Your updates are now live on your portfolio.
             </p>
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold font-[family-name:var(--font-mono)]">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
@@ -423,31 +431,31 @@ function EditProjectModal({ project, onClose }) {
           </div>
         ) : (
           <form onSubmit={handleSave} className="p-5 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1 overscroll-contain">
-            {/* Category */}
+            {/* Category selection (Video Editing & Graphic Design only) */}
             <div>
               <label className="block text-[11px] sm:text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wider">
                 Category
               </label>
-              <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
                     type="button"
                     onClick={() => setForm((p) => ({ ...p, category: cat }))}
-                    className={`py-2.5 sm:py-3 px-2 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-semibold border transition cursor-pointer flex flex-col items-center gap-1.5 ${
+                    className={`py-3 px-3 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold border transition cursor-pointer flex items-center justify-center gap-2 ${
                       form.category === cat
                         ? "bg-accent/15 border-accent text-accent shadow-sm shadow-accent/20"
                         : "bg-bg-elevated/70 border-white/5 text-text-secondary hover:border-accent/40"
                     }`}
                   >
                     <span className="text-base sm:text-lg">{categoryIcons[cat]}</span>
-                    <span className="truncate w-full text-center">{cat.split(" ")[0]}</span>
+                    <span>{cat}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Title + Brand (Responsive 1-col on mobile, 2-col on tablet/desktop) */}
+            {/* Title + Brand */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="block text-[11px] sm:text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">
@@ -484,7 +492,7 @@ function EditProjectModal({ project, onClose }) {
                 Description <span className="text-accent">*</span>
               </label>
               <textarea
-                placeholder="Brief project summary and creative impact..."
+                placeholder="Brief project summary..."
                 value={form.description}
                 onChange={handleChange("description")}
                 required
@@ -493,7 +501,30 @@ function EditProjectModal({ project, onClose }) {
               />
             </div>
 
-            {/* Tags + Tools (Responsive 1-col on mobile, 2-col on desktop) */}
+            {/* Google Drive Video Link (Required for Video Editing) */}
+            {isVideo && (
+              <div>
+                <label className="block text-[11px] sm:text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">
+                  Google Drive Video Link <span className="text-accent">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    placeholder="https://drive.google.com/file/d/.../view"
+                    value={driveUrl}
+                    onChange={(e) => setDriveUrl(e.target.value)}
+                    required={isVideo}
+                    className="w-full pl-9 pr-3.5 py-2.5 sm:py-3 bg-bg-elevated/80 border border-white/10 rounded-xl sm:rounded-2xl text-text-primary placeholder:text-text-secondary/40 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition"
+                  />
+                  <HiLink className="absolute left-3 top-3.5 text-text-secondary text-base" />
+                </div>
+                <p className="text-[10px] text-text-secondary/70 mt-1.5 leading-relaxed">
+                  Provide share link with access set to <strong>"Anyone with the link can view"</strong>.
+                </p>
+              </div>
+            )}
+
+            {/* Tags + Tools */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="block text-[11px] sm:text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">
@@ -503,7 +534,7 @@ function EditProjectModal({ project, onClose }) {
                   type="text"
                   value={form.tags}
                   onChange={handleChange("tags")}
-                  placeholder="e.g. ColorGrading, Editorial"
+                  placeholder="e.g. ColorGrading, Promo"
                   className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 bg-bg-elevated/80 border border-white/10 rounded-xl sm:rounded-2xl text-text-primary placeholder:text-text-secondary/40 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition"
                 />
               </div>
@@ -522,10 +553,10 @@ function EditProjectModal({ project, onClose }) {
               </div>
             </div>
 
-            {/* Thumbnail */}
+            {/* Thumbnail Image */}
             <div>
               <label className="block text-[11px] sm:text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wider">
-                Thumbnail Image
+                Thumbnail Image <span className="text-accent">*</span>
               </label>
               <div
                 onClick={() => thumbRef.current?.click()}
@@ -556,88 +587,7 @@ function EditProjectModal({ project, onClose }) {
               )}
             </div>
 
-            {/* Video Section (Video Editing only) */}
-            {isVideo && (
-              <div>
-                <label className="block text-[11px] sm:text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wider">
-                  Video File
-                </label>
-
-                {/* Current video status */}
-                {project.videoUrl && !removeVideo && (
-                  <div className="flex items-center justify-between bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-3 mb-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <HiCheckCircle className="text-green-400 text-lg flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-green-400 text-xs font-semibold">Video currently live</p>
-                        <p className="text-text-secondary/60 text-[10px] truncate max-w-[200px] sm:max-w-[300px]">
-                          {project.videoUrl}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setRemoveVideo(true)}
-                      className="text-red-400 text-xs font-semibold hover:underline cursor-pointer flex-shrink-0 ml-2"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
-
-                {removeVideo && (
-                  <div className="flex items-center justify-between bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-3">
-                    <p className="text-red-400 text-xs">Video will be removed upon saving.</p>
-                    <button
-                      type="button"
-                      onClick={() => setRemoveVideo(false)}
-                      className="text-accent text-xs font-semibold hover:underline cursor-pointer ml-2"
-                    >
-                      Undo
-                    </button>
-                  </div>
-                )}
-
-                {/* New video upload */}
-                <div
-                  onClick={() => videoRef.current?.click()}
-                  className="border-2 border-dashed border-white/15 hover:border-accent/60 bg-bg-elevated/40 rounded-2xl cursor-pointer transition p-4"
-                >
-                  <div className="h-24 flex flex-col items-center justify-center gap-1.5 text-text-secondary">
-                    <HiVideoCamera className={`text-3xl ${videoFile ? "text-accent" : "text-text-muted"}`} />
-                    {videoFile ? (
-                      <div className="text-center px-2">
-                        <p className="text-xs text-accent font-semibold truncate max-w-[220px]">{videoFile.name}</p>
-                        <p className="text-[10px] text-text-secondary mt-0.5">
-                          {(videoFile.size / (1024 * 1024)).toFixed(1)} MB • Click to replace
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-xs font-medium text-text-primary">
-                          {project.videoUrl ? "Click to replace video" : "Click to upload video"}
-                        </p>
-                        <p className="text-[10px] text-text-secondary/60">MP4, MOV, WEBM (up to 500MB)</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <input
-                  ref={videoRef}
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => setVideoFile(e.target.files[0])}
-                  className="hidden"
-                />
-                {videoProgress > 0 && (
-                  <div className="mt-2.5">
-                    <UploadProgress label="Uploading video..." progress={videoProgress} done={videoDone} />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Error */}
+            {/* Error Message */}
             {error && (
               <motion.p
                 initial={{ opacity: 0 }}
@@ -655,14 +605,7 @@ function EditProjectModal({ project, onClose }) {
                 disabled={saving}
                 className="w-full py-3.5 sm:py-4 bg-accent text-bg-primary font-bold rounded-xl sm:rounded-2xl text-sm sm:text-base hover:brightness-110 active:scale-[0.98] transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-accent/25"
               >
-                {saving ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-bg-primary/30 border-t-bg-primary rounded-full animate-spin" />
-                    Saving Changes...
-                  </span>
-                ) : (
-                  "Save Changes"
-                )}
+                {saving ? "Saving Changes..." : "Save Changes"}
               </button>
             </div>
           </form>
@@ -683,19 +626,20 @@ function AddProjectModal({ onClose, nextOrder }) {
     tools: "",
   });
 
+  // Google Drive Video Link
+  const [driveUrl, setDriveUrl] = useState("");
+
+  // Thumbnail
   const [thumbnailFile, setThumbnailFile] = useState(null);
-  const [videoFile, setVideoFile] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [thumbProgress, setThumbProgress] = useState(0);
-  const [videoProgress, setVideoProgress] = useState(0);
   const [thumbDone, setThumbDone] = useState(false);
-  const [videoDone, setVideoDone] = useState(false);
+
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
   const thumbRef = useRef();
-  const videoRef = useRef();
   const isVideo = form.category === "Video Editing";
 
   const handleChange = (field) => (e) =>
@@ -710,30 +654,52 @@ function AddProjectModal({ onClose, nextOrder }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
+    // Form validation
+    if (!form.title.trim()) {
+      setError("Please enter a project title.");
+      return;
+    }
+    if (!form.brand.trim()) {
+      setError("Please enter a brand / client name.");
+      return;
+    }
+    if (!form.description.trim()) {
+      setError("Please enter a short description.");
+      return;
+    }
     if (!thumbnailFile) {
       setError("Please select a thumbnail image.");
       return;
     }
-    if (isVideo && !videoFile) {
-      setError("Please select a video file.");
-      return;
+
+    let driveFileId = null;
+    let videoUrl = null;
+
+    if (isVideo) {
+      if (!driveUrl.trim()) {
+        setError("Please enter a Google Drive video link for Video Editing projects.");
+        return;
+      }
+      const extractedId = extractDriveFileId(driveUrl);
+      if (!extractedId) {
+        setError("Please provide a valid Google Drive video link (e.g. https://drive.google.com/file/d/.../view).");
+        return;
+      }
+      driveFileId = extractedId;
+      videoUrl = getDrivePreviewUrl(extractedId);
     }
 
     setUploading(true);
-    setError("");
 
     try {
+      // 1. Upload thumbnail to Cloudinary
       const { url: thumbUrl } = await uploadToCloudinary(thumbnailFile, setThumbProgress);
       setThumbDone(true);
 
-      let videoUrl = null;
-      if (isVideo && videoFile) {
-        const { url } = await uploadToCloudinary(videoFile, setVideoProgress);
-        videoUrl = url;
-        setVideoDone(true);
-      }
-
-      await addDoc(collection(db, "projects"), {
+      // 2. Create document in Firestore
+      await createProject({
         order: nextOrder,
         type: isVideo ? "video" : "graphic",
         category: form.category,
@@ -741,16 +707,17 @@ function AddProjectModal({ onClose, nextOrder }) {
         brand: form.brand.trim(),
         description: form.description.trim(),
         thumbnail: thumbUrl,
+        driveFileId,
+        driveUrl: isVideo ? driveUrl.trim() : null,
         videoUrl,
         tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
         tools: form.tools.split(",").map((t) => t.trim()).filter(Boolean),
-        createdAt: serverTimestamp(),
       });
 
       setSuccess(true);
       setTimeout(() => onClose(), 1500);
     } catch (err) {
-      setError("Upload failed: " + err.message);
+      setError("Save failed: " + err.message);
     } finally {
       setUploading(false);
     }
@@ -774,10 +741,8 @@ function AddProjectModal({ onClose, nextOrder }) {
         onClick={(e) => e.stopPropagation()}
         className="relative z-10 bg-bg-card border border-white/10 rounded-t-[28px] sm:rounded-3xl w-full sm:max-w-xl max-h-[92vh] sm:max-h-[88vh] flex flex-col shadow-2xl overflow-hidden"
       >
-        {/* Mobile drag handle */}
         <div className="w-12 h-1.5 rounded-full bg-white/20 mx-auto my-2.5 sm:hidden shrink-0" />
 
-        {/* Sticky Header */}
         <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 sm:py-4 border-b border-white/10 bg-bg-card/95 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-2.5">
             <span className="w-8 h-8 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center">
@@ -796,7 +761,6 @@ function AddProjectModal({ onClose, nextOrder }) {
           </button>
         </div>
 
-        {/* Success View */}
         {success ? (
           <div className="flex flex-col items-center justify-center py-12 sm:py-16 px-6 text-center flex-1">
             <motion.div
@@ -811,7 +775,7 @@ function AddProjectModal({ onClose, nextOrder }) {
               Project Added Successfully!
             </h3>
             <p className="text-text-secondary text-xs sm:text-sm max-w-xs sm:max-w-sm mb-6 leading-relaxed">
-              Your new project has been stored in Firestore and published to your live portfolio.
+              Your new project is now stored in Firestore and published to your live portfolio.
             </p>
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold font-[family-name:var(--font-mono)]">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
@@ -820,31 +784,31 @@ function AddProjectModal({ onClose, nextOrder }) {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1 overscroll-contain">
-            {/* Category */}
+            {/* Category selection (Video Editing & Graphic Design only) */}
             <div>
               <label className="block text-[11px] sm:text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wider">
                 Category
               </label>
-              <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
                     type="button"
                     onClick={() => setForm((p) => ({ ...p, category: cat }))}
-                    className={`py-2.5 sm:py-3 px-2 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-semibold border transition cursor-pointer flex flex-col items-center gap-1.5 ${
+                    className={`py-3 px-3 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold border transition cursor-pointer flex items-center justify-center gap-2 ${
                       form.category === cat
                         ? "bg-accent/15 border-accent text-accent shadow-sm shadow-accent/20"
                         : "bg-bg-elevated/70 border-white/5 text-text-secondary hover:border-accent/40"
                     }`}
                   >
                     <span className="text-base sm:text-lg">{categoryIcons[cat]}</span>
-                    <span className="truncate w-full text-center">{cat.split(" ")[0]}</span>
+                    <span>{cat}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Title + Brand (Responsive 1-col on mobile, 2-col on desktop) */}
+            {/* Title + Brand */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="block text-[11px] sm:text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">
@@ -881,7 +845,7 @@ function AddProjectModal({ onClose, nextOrder }) {
                 Description <span className="text-accent">*</span>
               </label>
               <textarea
-                placeholder="Brief project summary and creative impact..."
+                placeholder="Brief project summary..."
                 value={form.description}
                 onChange={handleChange("description")}
                 required
@@ -890,7 +854,30 @@ function AddProjectModal({ onClose, nextOrder }) {
               />
             </div>
 
-            {/* Tags + Tools (Responsive 1-col on mobile, 2-col on desktop) */}
+            {/* Google Drive Video Link (Required for Video Editing) */}
+            {isVideo && (
+              <div>
+                <label className="block text-[11px] sm:text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">
+                  Google Drive Video Link <span className="text-accent">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    placeholder="https://drive.google.com/file/d/.../view"
+                    value={driveUrl}
+                    onChange={(e) => setDriveUrl(e.target.value)}
+                    required={isVideo}
+                    className="w-full pl-9 pr-3.5 py-2.5 sm:py-3 bg-bg-elevated/80 border border-white/10 rounded-xl sm:rounded-2xl text-text-primary placeholder:text-text-secondary/40 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition"
+                  />
+                  <HiLink className="absolute left-3 top-3.5 text-text-secondary text-base" />
+                </div>
+                <p className="text-[10px] text-text-secondary/70 mt-1.5 leading-relaxed">
+                  Provide share link with access set to <strong>"Anyone with the link can view"</strong>.
+                </p>
+              </div>
+            )}
+
+            {/* Tags + Tools */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="block text-[11px] sm:text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">
@@ -898,7 +885,7 @@ function AddProjectModal({ onClose, nextOrder }) {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. ColorGrading, Editorial"
+                  placeholder="e.g. ColorGrading, Reel"
                   value={form.tags}
                   onChange={handleChange("tags")}
                   className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 bg-bg-elevated/80 border border-white/10 rounded-xl sm:rounded-2xl text-text-primary placeholder:text-text-secondary/40 text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition"
@@ -919,7 +906,7 @@ function AddProjectModal({ onClose, nextOrder }) {
               </div>
             </div>
 
-            {/* Thumbnail */}
+            {/* Thumbnail Image */}
             <div>
               <label className="block text-[11px] sm:text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wider">
                 Thumbnail Image <span className="text-accent">*</span>
@@ -953,49 +940,7 @@ function AddProjectModal({ onClose, nextOrder }) {
               )}
             </div>
 
-            {/* Video File (Video Editing only) */}
-            {isVideo && (
-              <div>
-                <label className="block text-[11px] sm:text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wider">
-                  Video File <span className="text-accent">*</span>
-                </label>
-                <div
-                  onClick={() => videoRef.current?.click()}
-                  className="border-2 border-dashed border-white/15 hover:border-accent/60 bg-bg-elevated/40 rounded-2xl cursor-pointer transition p-4"
-                >
-                  <div className="h-24 flex flex-col items-center justify-center gap-1.5 text-text-secondary">
-                    <HiVideoCamera className={`text-3xl ${videoFile ? "text-accent" : "text-text-muted"}`} />
-                    {videoFile ? (
-                      <div className="text-center px-2">
-                        <p className="text-xs text-accent font-semibold truncate max-w-[220px]">{videoFile.name}</p>
-                        <p className="text-[10px] text-text-secondary mt-0.5">
-                          {(videoFile.size / (1024 * 1024)).toFixed(1)} MB • Click to replace
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-xs font-medium text-text-primary">Click to upload video</p>
-                        <p className="text-[10px] text-text-secondary/60">MP4, MOV, WEBM (up to 500MB)</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <input
-                  ref={videoRef}
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => setVideoFile(e.target.files[0])}
-                  className="hidden"
-                />
-                {videoProgress > 0 && (
-                  <div className="mt-2.5">
-                    <UploadProgress label="Uploading video..." progress={videoProgress} done={videoDone} />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Error */}
+            {/* Error Message */}
             {error && (
               <motion.p
                 initial={{ opacity: 0 }}
@@ -1013,14 +958,7 @@ function AddProjectModal({ onClose, nextOrder }) {
                 disabled={uploading}
                 className="w-full py-3.5 sm:py-4 bg-accent text-bg-primary font-bold rounded-xl sm:rounded-2xl text-sm sm:text-base hover:brightness-110 active:scale-[0.98] transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer shadow-lg shadow-accent/25"
               >
-                {uploading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-bg-primary/30 border-t-bg-primary rounded-full animate-spin" />
-                    Uploading & Saving Project...
-                  </span>
-                ) : (
-                  "Add Project"
-                )}
+                {uploading ? "Uploading & Saving Project..." : "Add Project"}
               </button>
             </div>
           </form>
@@ -1031,10 +969,10 @@ function AddProjectModal({ onClose, nextOrder }) {
 }
 
 // ── Admin Project Card ─────────────────────────────────────────────────────────
-function AdminProjectCard({ project, onDelete, onEdit, onPreview, onQuickVideoUpload }) {
+function AdminProjectCard({ project, onDelete, onEdit, onPreview, onQuickDriveLink }) {
   const catColor = categoryColors[project.category] || "#f5a623";
   const isVideo = project.type === "video";
-  const hasVideo = Boolean(project.videoUrl);
+  const hasVideo = Boolean(project.driveFileId || project.videoUrl);
 
   return (
     <motion.div
@@ -1065,16 +1003,20 @@ function AdminProjectCard({ project, onDelete, onEdit, onPreview, onQuickVideoUp
           </button>
         </div>
 
-        {/* Status / NO VIDEO badge */}
+        {/* Status / Drive link badge */}
         <div className="absolute top-2.5 left-2.5">
           {isVideo && !hasVideo ? (
             <button
-              onClick={() => onQuickVideoUpload(project)}
-              className="px-2.5 py-1 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] bg-amber-400 text-black hover:bg-amber-300 transition cursor-pointer shadow-md"
-              title="Click to upload video"
+              onClick={() => onQuickDriveLink(project)}
+              className="px-2.5 py-1 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] bg-amber-400 text-black hover:bg-amber-300 transition cursor-pointer shadow-md flex items-center gap-1"
+              title="Click to add Google Drive video link"
             >
-              + UPLOAD VIDEO
+              <HiLink className="text-xs" /> + DRIVE LINK
             </button>
+          ) : isVideo ? (
+            <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] bg-emerald-500 text-black shadow-md flex items-center gap-1">
+              <HiCheckCircle className="text-xs" /> LIVE (DRIVE)
+            </span>
           ) : (
             <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold font-[family-name:var(--font-mono)] bg-emerald-500 text-black shadow-md">
               LIVE
@@ -1136,7 +1078,7 @@ export default function AdminDashboard() {
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [previewTarget, setPreviewTarget] = useState(null);
-  const [quickVideoTarget, setQuickVideoTarget] = useState(null);
+  const [quickDriveTarget, setQuickDriveTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
   const filtered = useMemo(() => {
@@ -1155,9 +1097,9 @@ export default function AdminDashboard() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await deleteDoc(doc(db, "projects", deleteTarget.id));
+      await deleteProject(deleteTarget.id);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to delete project:", err);
     } finally {
       setDeleting(false);
       setDeleteTarget(null);
@@ -1209,8 +1151,8 @@ export default function AdminDashboard() {
 
       {/* ── Stats & Content ──────────────────────────────────────────────── */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 mb-6">
+        {/* Stats Grid — Clean 3-column stats without "Videos Missing" or "Content Writing" */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 mb-6">
           {[
             { label: "Total Projects", value: projects.length, color: "#a78bfa" },
             {
@@ -1222,11 +1164,6 @@ export default function AdminDashboard() {
               label: "Graphic Design",
               value: projects.filter((p) => p.category === "Graphic Design").length,
               color: "#f5a623",
-            },
-            {
-              label: "Videos Missing",
-              value: projects.filter((p) => p.type === "video" && !p.videoUrl).length,
-              color: "#f87171",
             },
           ].map((stat) => (
             <div
@@ -1286,7 +1223,7 @@ export default function AdminDashboard() {
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 px-4 bg-bg-card/40 border border-white/10 rounded-3xl mb-12">
             <p className="text-text-secondary font-[family-name:var(--font-mono)] text-sm">
-              No projects in this category.
+              No projects in Firestore yet.
             </p>
             <button
               onClick={() => setShowAddModal(true)}
@@ -1308,7 +1245,7 @@ export default function AdminDashboard() {
                   onDelete={setDeleteTarget}
                   onEdit={setEditTarget}
                   onPreview={handlePreview}
-                  onQuickVideoUpload={setQuickVideoTarget}
+                  onQuickDriveLink={setQuickDriveTarget}
                 />
               ))}
             </AnimatePresence>
@@ -1330,8 +1267,8 @@ export default function AdminDashboard() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {quickVideoTarget && (
-          <QuickVideoUpload project={quickVideoTarget} onClose={() => setQuickVideoTarget(null)} />
+        {quickDriveTarget && (
+          <QuickDriveLinkModal project={quickDriveTarget} onClose={() => setQuickDriveTarget(null)} />
         )}
       </AnimatePresence>
 
@@ -1339,13 +1276,14 @@ export default function AdminDashboard() {
         {deleteTarget && (
           <DeleteConfirm
             project={deleteTarget}
+            deleting={deleting}
             onConfirm={handleDelete}
             onCancel={() => setDeleteTarget(null)}
           />
         )}
       </AnimatePresence>
 
-      {/* Preview — reuse same VideoModal / ImageLightbox as portfolio */}
+      {/* Preview — reuse same VideoModal (Google Drive iframe) / ImageLightbox as portfolio */}
       <AnimatePresence>
         {previewTarget && previewTarget.type === "video" && (
           <VideoModal project={previewTarget} onClose={() => setPreviewTarget(null)} />
