@@ -47,7 +47,7 @@ const statPop = {
 import useParallax from "../hooks/useParallax";
 
 const stats = [
-  { value: 50, suffix: "+", label: "PROJECTS DONE", pos: "-top-4 -right-4 lg:-right-8" },
+  { value: 100, suffix: "+", label: "PROJECTS DONE", pos: "-top-4 -right-4 lg:-right-8" },
   { value: 1, suffix: "+", label: "YEARS EXP", pos: "bottom-28 -left-8 lg:-left-14" },
   { value: 100, suffix: "%", label: "HAPPY CLIENTS", pos: "-bottom-4 -right-6 lg:-right-12" },
 ];

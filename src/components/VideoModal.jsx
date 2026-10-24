@@ -89,14 +89,32 @@ export default function VideoModal({ project, onClose }) {
 
         {/* ── Video Player (Google Drive Iframe or Native Video) ─────────── */}
         {driveFileId ? (
-          <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex-shrink-0">
-            <iframe
-              src={getDrivePreviewUrl(driveFileId)}
-              title={project.title}
-              className="border-none rounded-xl w-full h-full aspect-video"
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-            />
+          <div className="relative w-full bg-black flex-shrink-0 flex flex-col">
+            {/* 
+              Mobile: Use a taller height (60vh) to fit vertical videos.
+              Desktop: Fall back to standard aspect-video (16:9) 
+            */}
+            <div className="relative w-full h-[60vh] sm:h-auto sm:aspect-video overflow-hidden">
+              <iframe
+                src={getDrivePreviewUrl(driveFileId)}
+                title={project.title}
+                className="absolute inset-0 w-full h-full border-none"
+                allow="autoplay; encrypted-media; fullscreen"
+                allowFullScreen
+              />
+            </div>
+            
+            {/* Fallback button for mobile browsers that block iframe controls */}
+            <div className="bg-black/80 p-2 text-center border-t border-white/10">
+              <a 
+                href={project.driveUrl || `https://drive.google.com/file/d/${driveFileId}/view`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-accent hover:text-white transition-colors underline"
+              >
+                Video controls not working? Open directly in Google Drive
+              </a>
+            </div>
           </div>
         ) : hasVideo ? (
           <div className="relative w-full bg-black flex-shrink-0">
